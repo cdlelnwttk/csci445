@@ -1,0 +1,29 @@
+10-15 Questions 
+Multiple Choice
+Due 12pm on 21st 
+Topical Multiple Choice
+Do you know why you might use AR.JS
+    Tag flavor where you write HTML
+    Three JS flavor where you write Javascript
+    AR marker vs mutli-marker vs location
+Do you know why you might use WGSL vs GLSL
+Can you select the correct description of 
+    how we calculated where a fragment was shaded.
+Why do we augment 3D vectors and thus use 4D matrices and vectors.
+What is the relationship between Three.JS and GLSL.  Graphics-Card
+    Sphere in three is just a convienient was of defining a mesh
+What is the difference bewteen a mesh, surface, material, and a three JS object. 
+    Three JS object generic object that is part of threeJS
+        Mesh-> Three JS Object-> bound together surface and material
+        Material -> Is parameters and code that can color fragments
+        Surface -> Is the list of vertices and connections between them
+What is the difference between how we coded lights vs what threeJS lights do?
+--Compute Shaders
+    --TSL for writing either GLSL or WGSL depending on your Graphics Card
+    --TSL vs WGSL
+++ CPU Simulation of gravity
+A calculated surface (instead a boring sphere)
+    Mandelbrot set 
+        Courseness of the surface to the precision of the Shader
+
+
