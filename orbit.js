@@ -8,50 +8,69 @@
 
     const sun = textureLoader.load('./sun.jpg');
     const sunMat = new three.MeshBasicMaterial({ map: sun});
-    const sunObj = new three.SphereGeometry( 1.5, 32, 16 ); 
+    const sunObj = new three.SphereGeometry( 2, 32, 16 ); 
     
     const mercury = textureLoader.load('./mercury.jpg');
-    const mercuryMat = new three.MeshBasicMaterial({ map: mercury});
-    const mercuryObj = new three.SphereGeometry( 0.25, 32, 16 ); 
+    const mercuryMat = new three.MeshStandardMaterial({ map: mercury});
+    const mercuryObj = new three.SphereGeometry( 0.1, 32, 16 ); 
 
 
     const venus = textureLoader.load('./venus.jpg');
-    const venusMat = new three.MeshBasicMaterial({ map: venus});
-    const venusObj = new three.SphereGeometry( 0.5, 32, 16 ); 
+    const venusMat = new three.MeshStandardMaterial({ map: venus});
+    const venusObj = new three.SphereGeometry( 0.2, 32, 16 ); 
 
     
     const earth = textureLoader.load('./earth.jpg');
-    const earthMat = new three.MeshBasicMaterial({ map: earth});
-    const earthObj = new three.SphereGeometry( 0.5, 32, 16 ); 
+    const earthMat = new three.MeshStandardMaterial({ map: earth});
+    const earthObj = new three.SphereGeometry( 0.2, 32, 16 ); 
+
+    const mars = textureLoader.load('./mars.jpg');
+    const marsMat = new three.MeshStandardMaterial({ map: mars});
+    const marsObj = new three.SphereGeometry( 0.15, 32, 16 ); 
+
+    const jupiter = textureLoader.load('./jupiter.jpg');
+    const jupiterMat = new three.MeshStandardMaterial({ map: jupiter});
+    const jupiterObj = new three.SphereGeometry( 0.5, 32, 16 ); 
+
+    const saturn = textureLoader.load('./saturn.jpg');
+    const saturnMat = new three.MeshStandardMaterial({ map: saturn});
+    const saturnObj = new three.SphereGeometry( 0.4, 32, 16 ); 
+
+    const geometry = new three.TorusGeometry(2, 0.025, 10,30);
+    const material = new three.MeshBasicMaterial({ color: 0xffffff });
+    const mesh = new three.Mesh(geometry, material);
 
 
- 
     const accelerations=[];
     const velocities=[];
     var positions=[];
  
     let time=0.0;
 
+    function addplanet(object, material, position) {
+        let planetMesh = new three.Mesh(object, material);
+        planetMesh.position.set(position, 0, 0);
+        scene.add(planetMesh);
+    }
+    
+    function set_position(earth_distance) {
+
+    }
     function init() {
         let can=document.getElementById('area');
-        camera = new three.PerspectiveCamera( 100, 1.0, 0.1, 1000);
-        camera.position.z = 100;
+        camera = new three.PerspectiveCamera( 120, 1.0, 1, 100000);
+        camera.position.z = 50
 
         scene = new three.Scene();
         let sunMesh = new three.Mesh( sunObj, sunMat );
         scene.add(sunMesh);
 
-        let mercuryMesh = new three.Mesh(mercuryObj, mercuryMat );
-        mercuryMesh.position.set(-3, 0, 0);
-        scene.add(mercuryMesh);
-
-        let venusMesh = new three.Mesh(venusObj, venusMat );
-        venusMesh.position.set(-4, 0, 0);
-        scene.add(venusMesh);
-
-        let earthMesh = new three.Mesh(earthObj, earthMat );
-        earthMesh.position.set(-5.75, 0, 0);
-        scene.add(earthMesh);
+        addplanet(mercuryObj, mercuryMat, -2.5);
+        addplanet(venusObj, venusMat, -3);
+        addplanet(earthObj, earthMat, -3.5);
+        addplanet(marsObj, marsMat, -4.2);
+        addplanet(jupiterObj, jupiterMat, -7);
+        addplanet(saturnObj, saturnMat, -9);
 
         renderer = new three.WebGLRenderer( { antialias: true,canvas:can }  );
         renderer.setAnimationLoop( animate );
@@ -60,6 +79,15 @@
         controls.enableDamping = true;
         controls.minDistance = 1;
         controls.maxDistance = 10;
+        // const light = new THREE.PointLight( 0xff0000, 1, 100 );
+        // light.position.set( 0, 0, 0 );
+        // scene.add( light );
+        const sunLight = new three.PointLight(0xffffff, 100, 500);
+        sunLight.position.set(0, 0, 0); // place at Sun
+        scene.add(sunLight);
+        //mesh.position.set(-.5, 0, 0);
+        //scene.add(mesh);
+
     }
 
     var dt=0.01;
@@ -90,6 +118,7 @@
             positions[i].addVectors(positions[i],v);
         }
         time+=dt;
+        sunObj.rotateY(0.01);
     }
 
     window.onload=init();
