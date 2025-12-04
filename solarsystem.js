@@ -19,63 +19,63 @@
     sun: {
         texture: textureLoader.load('planets/sun.jpg'),
         position: new three.Vector3(0, 0, 0),
-        size: 2.0,
+        size: 3.0,
     },
     mercury: {
         texture: textureLoader.load('planets/mercury.jpg'),
-        position: new three.Vector3(0, 0, 4),
-        size: 0.5,
-        speed: 0.01,
+        position: new three.Vector3(0, 0, 5.0),
+        size: 0.75,
+        speed: 0.05,
         rotation: 98 * Math.PI / 180
 
     },
     venus: {
         texture: textureLoader.load('planets/venus.jpg'),
-        position: new three.Vector3(0, 0, 6),
-        size: 0.5,
-        speed: 0.01,
+        position: new three.Vector3(0, 0, 8.0),
+        size: 1,
+        speed: 0.03,
         rotation: 174 * Math.PI / 180
     },
     earth: {
         texture: textureLoader.load('planets/earth.jpg'),
-        position: new three.Vector3(0, 0, 8),
-        size: 0.5,
-        speed: 0.01,
+        position: new three.Vector3(0, 0, 11.0),
+        size: 1,
+        speed: 0.025,
         rotation: 24 * Math.PI / 180
     },
     mars: {
         texture: textureLoader.load('planets/mars.jpg'),
-        position: new three.Vector3(0, 0, 10),
-        size: 0.4,
-        speed: 0.01,
+        position: new three.Vector3(0, 0, 15.0),
+        size: 0.8,
+        speed: 0.02,
         rotation: 25 * Math.PI / 180
     },
     jupiter: {
         texture: textureLoader.load('planets/jupiter.jpg'),
-        position: new three.Vector3(0, 0, 12),
-        size: 1.0,
+        position: new three.Vector3(0, 0, 22.0),
+        size: 2.0,
         speed: 0.01,
         rotation: 3 * Math.PI / 180
     },
     saturn: {
         texture: textureLoader.load('planets/saturn.jpg'),
-        position: new three.Vector3(0, 0, 15),
-        size: 0.9,
-        speed: 0.01,
+        position: new three.Vector3(0, 0, 28.0),
+        size: 1.8,
+        speed: 0.005,
         rotation: 27 * Math.PI / 180
     },
     uranus: {
         texture: textureLoader.load('planets/uranus.jpg'),
-        position: new three.Vector3(0, 0, 18),
-        size: 0.7,
-        speed: 0.01,
+        position: new three.Vector3(0, 0, 33.0),
+        size: 1.6,
+        speed: 0.001,
         rotation: 98 * Math.PI / 180
     },
     neptune: {
         texture: textureLoader.load('planets/neptune.jpg'),
-        position: new three.Vector3(0, 0, 21),
-        size: 0.7,
-        speed: 0.01,
+        position: new three.Vector3(0, 0, 38.0),
+        size: 1.5,
+        speed: 0.000005,
         rotation: 28 * Math.PI / 180
     }
 };  
@@ -134,14 +134,76 @@
     side: three.DoubleSide
 });
 
-const ringGeometry = new three.RingGeometry(1.2, 1.8)
+const ringGeometry = new three.RingGeometry(3.0, 2.4)
 const saturnRingMesh = new three.Mesh(ringGeometry, ringMaterial);
 saturnRingMesh.rotation.x = Math.PI / 2;
-    saturnRingMesh.rotation.x = Math.PI / 2;
+
+
+
+
+  const jupRMaterial = new three.ShaderMaterial({
+    vertexShader: vertexShaderSource,
+    fragmentShader: fragmentShaderSource,
+    uniforms: {
+        ringColor: { value: new three.Color(0xFFFFFF) },
+        offset: {value : 0.3},
+        frequency: {value: 20.0},
+        opacity: { value: 0.25}
+    },
+    transparent: true,
+    side: three.DoubleSide
+});
+
+const jupRGeometry = new three.RingGeometry(3.4, 2.2)
+const jupRingMesh = new three.Mesh(jupRGeometry, jupRMaterial);
+
+const uranusRMesh = new three.Mesh(jupRGeometry, jupRMaterial);
+jupRingMesh.rotation.x = Math.PI / 2;
+
+
+function createLabel(name) {
+    const canvas = document.createElement('canvas');
+    const size = 256;
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
+
+    ctx.clearRect(0, 0, size, size);
+
+    ctx.font = '30px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    ctx.lineWidth = 6;          
+    ctx.strokeStyle = 'black';
+    ctx.strokeText(name, size / 2, size / 2);
+
+    ctx.fillStyle = 'white';
+    ctx.fillText(name, size / 2, size / 2);
+
+    const texture = new three.CanvasTexture(canvas);
+    texture.needsUpdate = true;
+    texture.minFilter = three.LinearFilter;
+    texture.magFilter = three.LinearFilter;
+
+    const material = new three.SpriteMaterial({
+        map: texture,
+        transparent: true,
+        alphaTest: 0.1, 
+        depthTest: true,
+        depthWrite: false
+    });
+
+    const sprite = new three.Sprite(material);
+    sprite.scale.set(10, 10, 1);
+    return sprite;
+}
+
+    const planetLabels = {};
     function init() {
         
         let can=document.getElementById('area');
-        camera = new three.PerspectiveCamera( 10, (window.innerWidth / window.innerHeight), 0.1, 10000);
+        camera = new three.PerspectiveCamera( 25, (window.innerWidth / window.innerHeight), 0.1, 10000);
         camera.position.z = 100;
         camera.position.set(0, 120, 100);
         camera.lookAt(new three.Vector3(0, 0, 0));
@@ -159,6 +221,10 @@ saturnRingMesh.rotation.x = Math.PI / 2;
 
         scene = new three.Scene();
         scene.add(planetMeshes.sun);
+        let sunLabel = createLabel("Sun");
+        sunLabel.position.set(0, planets.sun.size + 2, 0);
+        planetLabels["Sun"] = sunLabel;
+        planetMeshes.sun.add(sunLabel);
 
         for (let name in planets) {
             if (name === "sun") continue;
@@ -176,9 +242,16 @@ saturnRingMesh.rotation.x = Math.PI / 2;
             const orbitMesh = addOrbitLine(radius);
             planetOrbitLines[name] = orbitMesh;
             planetMeshes.sun.add(orbitMesh);
+
+            let label = createLabel(name);
+            label.position.set(0, planets[name].size + 2, 0);
+            planetLabels[name] = label;
+            planetMeshes[name].add(label);
         }
 
         planetMeshes.saturn.add(saturnRingMesh);
+        planetMeshes.jupiter.add(jupRingMesh);
+        planetMeshes.uranus.add(uranusRMesh);
         const checkbox = document.getElementById('showAxis');
         checkbox.addEventListener('change', () => {
             for (let name in planetAxes) {
