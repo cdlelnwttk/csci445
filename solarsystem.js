@@ -78,22 +78,37 @@
     function init() {
         
         let can=document.getElementById('area');
-        camera = new three.PerspectiveCamera( 70, 1.0, 0.1, 100 );
-        camera.position.z = 70;
+        camera = new three.PerspectiveCamera( 100, (window.innerWidth / window.innerHeight), 0.1, 100 );
+        camera.position.z = 100;
 
     
 
-        renderer = new three.WebGLRenderer( { antialias: true,canvas:can }  );
+        renderer = new three.WebGLRenderer({ antialias: true, canvas: can });
+        renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setAnimationLoop(animate);
         controls = new OrbitControls( camera, renderer.domElement );
-       
+    
         controls.enableDamping = true;
         controls.minDistance = 1;
         controls.maxDistance = 10;
  
         scene = new three.Scene();
         scene.add(planetMeshes.sun);
+        scene.add(planetMeshes.mercury);
+        scene.add(planetMeshes.venus);
+        scene.add(planetMeshes.earth);
+        scene.add(planetMeshes.mars);
+        scene.add(planetMeshes.jupiter);
+        scene.add(planetMeshes.saturn);
+        scene.add(planetMeshes.uranus);
+        scene.add(planetMeshes.neptune);
 
+        window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        });
     }
 
     function animate() {
