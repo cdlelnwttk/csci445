@@ -2,71 +2,102 @@
     import * as three from 'three';
     import { OrbitControls } from 'three/addons/OrbitControls.js';
 
-        async function getFileContents(filename){
+    let camera, scene, renderer,controls;
+    
+    async function getFileContents(filename){
       return fetch(filename)
         .then((response)=>response.text())
         .then((text)=>{return text});
     }
 
-    let camera, scene, renderer,controls;
-    const textureLoader=new three.TextureLoader();
-    const vertexShaderCode=await getFileContents("./vertexLightShader.glsl");
-    const fragmentShaderCode=await getFileContents("./fragmentLightShader.glsl");
+    const textureLoader = new three.TextureLoader();
+    const sunTexture = textureLoader.load('./sun.jpg');
 
-    const sun_image = textureLoader.load('./sun.jpg');
-    // const sunMat = new three.MeshBasicMaterial({ map: sun_image });
-    const sunObj= new three.SphereGeometry( 2, 32, 16 ); 
+    const vertexShaderSource=await getFileContents("./vertexShader.glsl");
+    const fragmentShaderSource=await getFileContents("./fragmentShader.glsl");
     
-    const sphereMat = new three.ShaderMaterial({
+    const glowV =await getFileContents("./glowShader.glsl");
+
+    const spikeV=await getFileContents("./spikeVertex.glsl");
+    const spikeF=await getFileContents("./spikefrag.glsl");
+
+   const geometry = new three.SphereGeometry(1, 128, 128);
+
+    const material = new three.ShaderMaterial({
     uniforms: {
-        color: { value: new three.Color(0xff0000) }
+        baseColor: { value: new three.Color(0xff5555) },
+        spikeHeight: { value: 0.3 },
+        spikeFreq: { value: 10.0 } ,
+        time: { value: 0.0 } 
     },
-    vertexShader: vertexShaderCode,
-    fragmentShader: fragmentShaderCode
+    vertexShader: spikeV,
+    fragmentShader: spikeF,
+    side: three.DoubleSide,
+    transparent: true,
+    depthWrite: false,
+    additiveBlending: true,
+    depthTest: true
+});
+
+    const spike = new three.Mesh(geometry, material);
+
+
+    const sphereMat = new three.ShaderMaterial({
+    vertexShader: vertexShaderSource,
+    fragmentShader: fragmentShaderSource,
+    transparent: true,
+    uniforms: {
+        tex: { value: sunTexture }
+    }
+    });
+
+    const glowMat = new three.ShaderMaterial({
+        vertexShader: vertexShaderSource,
+        fragmentShader: glowV,
+        uniforms: {
+            glowColor: { value: new three.Color(0xFFC000) },
+            intensity: { value: 1.0 },
+            radius: { value: 0.6},
+            blur: { value: 0.8 },
+  },
+    transparent: true,
+     depthWrite: false,
+     side: three.DoubleSide,
+     additiveBlending: true,
 });
 
 
-
-    // const glowMat = new three.ShaderMaterial({
-    //     uniforms: {
-    //         glowColor: { value: new three.Color(0xFFFF00) },
-    //         intensity: { value: 1.5 },
-    //         time: { value: 0.0 },
-    //     },
-    //     vertexShader: vertexShaderCode,
-    //     fragmentShader: fragmentShaderCode,
-    //     transparent: true,
-    //     blending: three.AdditiveBlending,
-    //     depthWrite: false,
-    //     side: three.BackSide
-    // });
-
-    // const sunGlow = new three.Mesh(new three.SphereGeometry(3,32,16), glowMat);
-
-    let time=0.0;
-
+    const sphereObj = new three.SphereGeometry(1,32, 32);
     function init() {
+        
         let can=document.getElementById('area');
-        camera = new three.PerspectiveCamera( 100, 1.0, 0.1, 100 );
-        camera.position.z = 10;
+        camera = new three.PerspectiveCamera( 70, 1.0, 0.1, 100 );
+        camera.position.z = 2;
 
-        scene = new three.Scene(); 
-        scene.add( new three.Mesh( sunObj, sphereMat));
-        scene.add(sunGlow);
+        let mesh = new three.Mesh( sphereObj, sphereMat);
+        let glowMesh= new three.Mesh(new three.SphereGeometry(1.2,32, 32), glowMat);
+        glowMesh.scale.multiplyScalar(1.2);
+
+        scene = new three.Scene();
+        scene.add( mesh );
+        scene.add(spike);
+        mesh.add(glowMesh);
+        // scene.add(sphere);
+
         renderer = new three.WebGLRenderer( { antialias: true,canvas:can }  );
-        renderer.setAnimationLoop( animate );
+        renderer.setAnimationLoop( Karlsanimate );
         controls = new OrbitControls( camera, renderer.domElement );
        
         controls.enableDamping = true;
         controls.minDistance = 1;
         controls.maxDistance = 10;
+ 
     }
 
-    var dt=0.01;
-    function animate() {
+    function Karlsanimate() {
         controls.update();
         renderer.render( scene, camera );
-        time+=dt;
+        material.uniforms.time.value += 0.01;
     }
 
     window.onload=init();
