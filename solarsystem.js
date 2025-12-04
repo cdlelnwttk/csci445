@@ -114,9 +114,6 @@
 
     const planetAxes = {};
     const planetOrbitLines = {}
-    // const orbitTorus = new three.TorusGeometry(1, 0.01, 16, 100);
-    // const orbitMaterial = new three.MeshBasicMaterial({ color: 0xffffff });
-    // const orbitMesh = new three.Mesh(orbitTorus, orbitMaterial);
 
 
     function init() {
