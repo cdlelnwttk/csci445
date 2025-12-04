@@ -144,18 +144,19 @@
 
         for (let name in planets) {
             if (name === "sun") continue;
+
             let orbit = new three.Object3D();
             planetMeshes.sun.add(orbit);
             orbit.add(planetMeshes[name]);
             planetOrbits[name] = orbit;
-            axis = addZAxis(planetMeshes[name], planets[name].size * 3);
+
+            let axis = addZAxis(planetMeshes[name], planets[name].size * 3);
             planetAxes[name] = axis; 
             planetMeshes[name].rotation.z = planets[name].rotation;
         }
 
 
         const checkbox = document.getElementById('showAxis');
-        checkbox.checked = true;
         checkbox.addEventListener('change', () => {
             for (let name in planetAxes) {
                 planetAxes[name].visible = checkbox.checked;
