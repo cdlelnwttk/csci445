@@ -91,19 +91,34 @@
     const planetOrbits = {}
 
     function addZAxis(object, length) {
-    const points = [
-        new three.Vector3(0, -length, 0),
-        new three.Vector3(0,  length, 0)
-    ];
+        const points = [
+            new three.Vector3(0, -length, 0),
+            new three.Vector3(0,  length, 0)
+        ];
 
-    const geometry = new three.BufferGeometry().setFromPoints(points);
-    const material = new three.LineBasicMaterial({ color: 0x00ff00, transparent: true, opacity: 1.0});
-    const line = new three.Line(geometry, material);
+        const geometry = new three.BufferGeometry().setFromPoints(points);
+        const material = new three.LineBasicMaterial({ color: 0x00ff00, transparent: true, opacity: 1.0});
+        const line = new three.Line(geometry, material);
 
-    object.add(line);
-    return line;
-}
+        object.add(line);
+        return line;
+        }
+
+    function addOrbitLine(radius) {
+        const orbitTorus = new three.TorusGeometry(radius, 0.01, 16, 100);
+        const orbitMaterial = new three.MeshBasicMaterial({ color: 0xffffff , transparent: true, opacity: 1.0});
+        const orbitMesh = new three.Mesh(orbitTorus, orbitMaterial);
+        orbitMesh.rotation.x = Math.PI / 2;
+        return orbitMesh;
+    }
+
     const planetAxes = {};
+    const planetOrbitLines = {}
+    // const orbitTorus = new three.TorusGeometry(1, 0.01, 16, 100);
+    // const orbitMaterial = new three.MeshBasicMaterial({ color: 0xffffff });
+    // const orbitMesh = new three.Mesh(orbitTorus, orbitMaterial);
+
+
     function init() {
         
         let can=document.getElementById('area');
@@ -125,22 +140,6 @@
 
         scene = new three.Scene();
         scene.add(planetMeshes.sun);
-        // scene.add(planetMeshes.mercury);
-        // scene.add(planetMeshes.venus);
-        scene.add(planetMeshes.earth);
-        scene.add(planetMeshes.mars);
-        scene.add(planetMeshes.jupiter);
-        scene.add(planetMeshes.saturn);
-        scene.add(planetMeshes.uranus);
-        scene.add(planetMeshes.neptune);
-
-        // const mercPivot = new three.Object3D();
-        // planetMeshes.sun.add(mercPivot);
-        // mercPivot.add(planetMeshes.mercury);
-
-        // const venusPivot = new three.Object3D();
-        // planetMeshes.sun.add(venusPivot);
-        // venusPivot.add(planetMeshes.venus);
 
         for (let name in planets) {
             if (name === "sun") continue;
@@ -153,6 +152,11 @@
             let axis = addZAxis(planetMeshes[name], planets[name].size * 3);
             planetAxes[name] = axis; 
             planetMeshes[name].rotation.z = planets[name].rotation;
+
+            const radius = planets[name].position.z;
+            const orbitMesh = addOrbitLine(radius);
+            planetOrbitLines[name] = orbitMesh;
+            planetMeshes.sun.add(orbitMesh);
         }
 
 
@@ -160,6 +164,14 @@
         checkbox.addEventListener('change', () => {
             for (let name in planetAxes) {
                 planetAxes[name].visible = checkbox.checked;
+            }
+            });
+
+        const checkboxOrbit = document.getElementById('showOrbit');
+        checkboxOrbit.addEventListener('change', () => {
+            for (let name in planetAxes) {
+                planetOrbitLines[name].visible = checkboxOrbit.checked;
+                planetMeshes.sun.add(planetOrbitLines[name]);
             }
             });
         window.addEventListener('resize', () => {
