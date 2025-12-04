@@ -11,6 +11,8 @@
         .then((text)=>{return text});
     }
 
+    const vertexShaderSource=await getFileContents("./vertexShader.glsl");
+    const fragmentShaderSource=await getFileContents("./ringFragment.glsl");
     const textureLoader = new three.TextureLoader();
 
     const planets = {
@@ -115,7 +117,27 @@
     const planetAxes = {};
     const planetOrbitLines = {}
 
+    // const saturnRingGeometry = new three.RingGeometry(1.1, 1.5, 64);
+    // const saturnRingMaterial = new three.MeshBasicMaterial({color: 0x7B3F00, side: three.DoubleSide,   transparent: true, opacity: 1.0});
+    // const saturnRingMesh = new three.Mesh(saturnRingGeometry, saturnRingMaterial);
 
+    const ringMaterial = new three.ShaderMaterial({
+    vertexShader: vertexShaderSource,
+    fragmentShader: fragmentShaderSource,
+    uniforms: {
+        ringColor: { value: new three.Color(0xC4A484) },
+        offset: {value : 0.3},
+        frequency: {value: 50.0},
+        opacity: { value: 1.0 }
+    },
+    transparent: true,
+    side: three.DoubleSide
+});
+
+const ringGeometry = new three.RingGeometry(1.2, 1.8)
+const saturnRingMesh = new three.Mesh(ringGeometry, ringMaterial);
+saturnRingMesh.rotation.x = Math.PI / 2;
+    saturnRingMesh.rotation.x = Math.PI / 2;
     function init() {
         
         let can=document.getElementById('area');
@@ -156,7 +178,7 @@
             planetMeshes.sun.add(orbitMesh);
         }
 
-
+        planetMeshes.saturn.add(saturnRingMesh);
         const checkbox = document.getElementById('showAxis');
         checkbox.addEventListener('change', () => {
             for (let name in planetAxes) {
