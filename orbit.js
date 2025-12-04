@@ -11,7 +11,7 @@
     }
 
     const textureLoader = new three.TextureLoader();
-    const sunTexture = textureLoader.load('./sun.jpg');
+    const sunTexture = textureLoader.load('planets/sun.jpg');
 
     const vertexShaderSource=await getFileContents("./vertexShader.glsl");
     const fragmentShaderSource=await getFileContents("./fragmentShader.glsl");
@@ -23,11 +23,13 @@
 
    const geometry = new three.SphereGeometry(1, 128, 128);
 
+    const sunMat = new three.MeshBasicMaterial({ map: sunTexture});
+
     const material = new three.ShaderMaterial({
     uniforms: {
         baseColor: { value: new three.Color(0xff5555) },
-        spikeHeight: { value: 0.3 },
-        spikeFreq: { value: 10.0 } ,
+        spikeHeight: { value: 0.2 },
+        spikeFreq: { value: 27.0 } ,
         time: { value: 0.0 } 
     },
     vertexShader: spikeV,
@@ -66,22 +68,22 @@
      additiveBlending: true,
 });
 
-
     const sphereObj = new three.SphereGeometry(1,32, 32);
+    const mesh = new three.Mesh( sphereObj, sunMat);
     function init() {
         
         let can=document.getElementById('area');
         camera = new three.PerspectiveCamera( 70, 1.0, 0.1, 100 );
         camera.position.z = 2;
 
-        let mesh = new three.Mesh( sphereObj, sphereMat);
+
         let glowMesh= new three.Mesh(new three.SphereGeometry(1.2,32, 32), glowMat);
         glowMesh.scale.multiplyScalar(1.2);
 
         scene = new three.Scene();
         scene.add( mesh );
-        scene.add(spike);
-        mesh.add(glowMesh);
+        // scene.add(spike);
+        // mesh.add(glowMesh);
         // scene.add(sphere);
 
         renderer = new three.WebGLRenderer( { antialias: true,canvas:can }  );
@@ -98,6 +100,9 @@
         controls.update();
         renderer.render( scene, camera );
         material.uniforms.time.value += 0.01;
+        mesh.rotation.y += 0.01; 
+        spike.rotation.y += 0.01;
+
     }
 
     window.onload=init();
