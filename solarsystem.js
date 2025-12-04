@@ -23,50 +23,58 @@
         texture: textureLoader.load('planets/mercury.jpg'),
         position: new three.Vector3(0, 0, 4),
         size: 0.5,
-        speed: 0.02
+        speed: 0.01,
+        rotation: 98 * Math.PI / 180
 
     },
     venus: {
         texture: textureLoader.load('planets/venus.jpg'),
         position: new three.Vector3(0, 0, 6),
         size: 0.5,
-        speed: 0.015
+        speed: 0.01,
+        rotation: 174 * Math.PI / 180
     },
     earth: {
         texture: textureLoader.load('planets/earth.jpg'),
         position: new three.Vector3(0, 0, 8),
         size: 0.5,
-        speed: 0.02
+        speed: 0.01,
+        rotation: 24 * Math.PI / 180
     },
     mars: {
         texture: textureLoader.load('planets/mars.jpg'),
         position: new three.Vector3(0, 0, 10),
         size: 0.4,
-        speed: 0.018
+        speed: 0.01,
+        rotation: 25 * Math.PI / 180
     },
     jupiter: {
         texture: textureLoader.load('planets/jupiter.jpg'),
         position: new three.Vector3(0, 0, 12),
         size: 1.0,
-        speed: 0.05
+        speed: 0.01,
+        rotation: 3 * Math.PI / 180
     },
     saturn: {
         texture: textureLoader.load('planets/saturn.jpg'),
         position: new three.Vector3(0, 0, 15),
         size: 0.9,
-        speed: 0.04
+        speed: 0.01,
+        rotation: 27 * Math.PI / 180
     },
     uranus: {
         texture: textureLoader.load('planets/uranus.jpg'),
         position: new three.Vector3(0, 0, 18),
         size: 0.7,
-        speed: 0.03
+        speed: 0.01,
+        rotation: 98 * Math.PI / 180
     },
     neptune: {
         texture: textureLoader.load('planets/neptune.jpg'),
         position: new three.Vector3(0, 0, 21),
         size: 0.7,
-        speed: 0.025
+        speed: 0.01,
+        rotation: 28 * Math.PI / 180
     }
 };  
    const planetMeshes = {}; 
@@ -82,6 +90,20 @@
 
     const planetOrbits = {}
 
+    function addZAxis(object, length) {
+    const points = [
+        new three.Vector3(0, -length, 0),
+        new three.Vector3(0,  length, 0)
+    ];
+
+    const geometry = new three.BufferGeometry().setFromPoints(points);
+    const material = new three.LineBasicMaterial({ color: 0x00ff00, transparent: true, opacity: 1.0});
+    const line = new three.Line(geometry, material);
+
+    object.add(line);
+    return line;
+}
+    const planetAxes = {};
     function init() {
         
         let can=document.getElementById('area');
@@ -126,8 +148,19 @@
             planetMeshes.sun.add(orbit);
             orbit.add(planetMeshes[name]);
             planetOrbits[name] = orbit;
+            axis = addZAxis(planetMeshes[name], planets[name].size * 3);
+            planetAxes[name] = axis; 
+            planetMeshes[name].rotation.z = planets[name].rotation;
         }
 
+
+        const checkbox = document.getElementById('showAxis');
+        checkbox.checked = true;
+        checkbox.addEventListener('change', () => {
+            for (let name in planetAxes) {
+                planetAxes[name].visible = checkbox.checked;
+            }
+            });
         window.addEventListener('resize', () => {
         camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();
