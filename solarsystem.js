@@ -1,9 +1,10 @@
 
     import * as three from 'three';
     import { OrbitControls } from 'three/addons/OrbitControls.js';
+    import { FlyControls } from 'three/addons/FlyControls.js';
+    let camera, scene, renderer, controls;
+    const clock = new three.Clock();
 
-    let camera, scene, renderer,controls;
-    
     async function getFileContents(filename){
       return fetch(filename)
         .then((response)=>response.text())
@@ -74,24 +75,25 @@
         planetMeshes[name] = mesh;
     }
 
-    
     function init() {
         
         let can=document.getElementById('area');
-        camera = new three.PerspectiveCamera( 100, (window.innerWidth / window.innerHeight), 0.1, 100 );
+        camera = new three.PerspectiveCamera( 10, (window.innerWidth / window.innerHeight), 0.1, 10000);
         camera.position.z = 100;
-
+        camera.position.set(0, 100, 100);
+        camera.lookAt(new three.Vector3(0, 0, 0));
     
 
         renderer = new three.WebGLRenderer({ antialias: true, canvas: can });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setAnimationLoop(animate);
-        controls = new OrbitControls( camera, renderer.domElement );
-    
-        controls.enableDamping = true;
-        controls.minDistance = 1;
-        controls.maxDistance = 10;
- 
+        
+        controls = new FlyControls(camera, renderer.domElement);
+        controls.movementSpeed = 10;
+        controls.rollSpeed = Math.PI / 24;
+        controls.autoForward = false;
+        controls.dragToLook = true;
+
         scene = new three.Scene();
         scene.add(planetMeshes.sun);
         scene.add(planetMeshes.mercury);
@@ -108,13 +110,18 @@
         camera.updateProjectionMatrix();
 
         renderer.setSize(window.innerWidth, window.innerHeight);
+        window.addEventListener('wheel', (event) => {
+            camera.translateZ(event.deltaY * 0.05); // adjust 0.05 for speed
+        });
         });
     }
 
     function animate() {
-        controls.update();
+        const delta = clock.getDelta();
+        controls.update(delta);
         renderer.render( scene, camera );
         planetMeshes.sun.rotation.y += 0.01; 
+        // controls.update(time);
 
     }
 
