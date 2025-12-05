@@ -4,8 +4,9 @@ void main() {
     vec2 center = gl_PointCoord - vec2(0.5); 
     float distanceFromCenter = length(center);
     
-    if(distanceFromCenter > 0.5) discard;
+    vec4 color = texture2D(map, gl_PointCoord);
+    if(distanceFromCenter > 0.5) color.a = 0.0;
     
-    vec4 texColor = texture2D(map, gl_PointCoord);
-    gl_FragColor = texColor;
+    
+    gl_FragColor = color;
 }

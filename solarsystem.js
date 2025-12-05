@@ -1,6 +1,5 @@
 
     import * as three from 'three';
-    import { OrbitControls } from 'three/addons/OrbitControls.js';
     import { FlyControls } from 'three/addons/FlyControls.js';
     let camera, scene, renderer, controls;
     const clock = new three.Clock();
@@ -19,6 +18,45 @@
 
     const textureLoader = new three.TextureLoader();
 
+    const asteroid_fields = [];
+
+    function addAsteroidField(givenRadius){
+        
+        const number_of_asteroids = 500;
+        const asteroid_positions = new Float32Array(number_of_asteroids * 3);
+        const angles = new Float32Array(number_of_asteroids);
+        const offsets = new Float32Array(number_of_asteroids);
+        const speeds = new Float32Array(number_of_asteroids);
+        for (let i = 0; i < number_of_asteroids; i++) {
+            angles[i] = Math.random() * 2 * Math.PI;
+            offsets[i] = (Math.random() - 0.5) * 8;
+            speeds[i] = (Math.random()) * 2;
+        }
+
+        const asteroid_geo = new three.BufferGeometry();
+
+        asteroid_geo.setAttribute('position', new three.BufferAttribute(asteroid_positions, 3));
+        asteroid_geo.setAttribute('angle', new three.BufferAttribute(angles, 1));
+        asteroid_geo.setAttribute('offset', new three.BufferAttribute(offsets, 1));
+        asteroid_geo.setAttribute('speed', new three.BufferAttribute(speeds, 1));
+
+        const asteroidTexture = new three.TextureLoader().load('planets/asteroid.jpg');
+
+        const asteroid_mat = new three.ShaderMaterial({
+            vertexShader: asteroidVertex,
+            fragmentShader: asteroidFragment,
+            uniforms: {
+                radius: { value: givenRadius },
+                size: { value: 8.0 },
+                map: { value: asteroidTexture },
+                time: {value: 0.0},
+            },
+            transparent : true,
+        });
+
+        let points = new three.Points(asteroid_geo, asteroid_mat);
+        return { points, mat: asteroid_mat };
+    }
 
 
     const particleCount = 5000;
@@ -48,39 +86,6 @@
     });
 
     const particles = new three.Points(geometry, material);
-
-
-    const number_of_asteroids = 500;
-    const asteroid_positions = new Float32Array(number_of_asteroids * 3);
-    const angles = new Float32Array(number_of_asteroids);
-    const offsets = new Float32Array(number_of_asteroids);
-    const speeds = new Float32Array(number_of_asteroids);
-    for (let i = 0; i < number_of_asteroids; i++) {
-        angles[i] = Math.random() * 2 * Math.PI;
-        offsets[i] = (Math.random() - 0.5) * 8;
-        speeds[i] = (Math.random()) * 2;
-    }
-
-    const asteroid_geo = new three.BufferGeometry();
-    asteroid_geo.setAttribute('position', new three.BufferAttribute(asteroid_positions, 3));
-    asteroid_geo.setAttribute('angle', new three.BufferAttribute(angles, 1));
-    asteroid_geo.setAttribute('offset', new three.BufferAttribute(offsets, 1));
-    asteroid_geo.setAttribute('speed', new three.BufferAttribute(speeds, 1));
-    const asteroidTexture = new three.TextureLoader().load('planets/asteroid.jpg');
-
-    const asteroid_mat = new three.ShaderMaterial({
-        vertexShader: asteroidVertex,
-        fragmentShader: asteroidFragment,
-        uniforms: {
-            radius: { value: 20.0 },
-            size: { value: 8.0 },
-            map: { value: asteroidTexture },
-            time: {value: 0.0},
-        },
-    });
-
-
-const asteroids = new three.Points(asteroid_geo, asteroid_mat);
 
     const planets = {
     sun: {
@@ -267,6 +272,9 @@ function createLabel(name) {
 }
 
     const planetLabels = {};
+    const asteroid_belt = addAsteroidField(20);
+    const kepler_belt = addAsteroidField(40);
+    asteroid_fields.push(asteroid_belt);
     function init() {
         
         let can=document.getElementById('area');
@@ -321,7 +329,8 @@ function createLabel(name) {
         planetMeshes.uranus.add(uranusRMesh);
 
         scene.add(particles);
-        scene.add(asteroids);
+        scene.add(asteroid_belt.points);
+        scene.add(kepler_belt.points);
         const checkbox = document.getElementById('showAxis');
         checkbox.addEventListener('change', () => {
             for (let name in planetAxes) {
@@ -355,7 +364,8 @@ function createLabel(name) {
         for (let name in planetOrbits) {
             planetOrbits[name].rotation.y += planets[name].speed;
         }
-        asteroid_mat.uniforms.time.value = clock.getElapsedTime();
+        asteroid_belt.mat.uniforms.time.value = clock.getElapsedTime();
+        kepler_belt.mat.uniforms.time.value = clock.getElapsedTime();
         particles.rotation.y += 0.01;
     };
 
