@@ -17,12 +17,13 @@
     const asteroidFragment=await getFileContents("./asteroidFragment.glsl");
 
     const textureLoader = new three.TextureLoader();
-
+    const asteroidTexture = new three.TextureLoader().load('planets/asteroid.jpg');
+    const noiseTexture = new three.TextureLoader().load('perlin_noise.png')
     const asteroid_fields = [];
 
-    function addAsteroidField(givenRadius){
+    function addAsteroidField(givenRadius, numberOfAsteroids){
         
-        const number_of_asteroids = 500;
+        const number_of_asteroids = numberOfAsteroids;
         const asteroid_positions = new Float32Array(number_of_asteroids * 3);
         const angles = new Float32Array(number_of_asteroids);
         const offsets = new Float32Array(number_of_asteroids);
@@ -40,16 +41,16 @@
         asteroid_geo.setAttribute('offset', new three.BufferAttribute(offsets, 1));
         asteroid_geo.setAttribute('speed', new three.BufferAttribute(speeds, 1));
 
-        const asteroidTexture = new three.TextureLoader().load('planets/asteroid.jpg');
 
         const asteroid_mat = new three.ShaderMaterial({
             vertexShader: asteroidVertex,
             fragmentShader: asteroidFragment,
             uniforms: {
                 radius: { value: givenRadius },
-                size: { value: 8.0 },
+                size: { value: 11.0 },
                 map: { value: asteroidTexture },
                 time: {value: 0.0},
+                noise: {value: noiseTexture}
             },
             transparent : true,
         });
@@ -59,33 +60,35 @@
     }
 
 
-    const particleCount = 5000;
-    const positions = new Float32Array(particleCount * 3);
+    function addDustParticles(radius){
+        const particleCount = 5000;
+        const positions = new Float32Array(particleCount * 3);
     
-    for (let i = 0; i < particleCount; i++) {
-        const angle = Math.random() * 360 * (Math.PI / 180);
+        for (let i = 0; i < particleCount; i++) {
+            const angle = Math.random() * 360 * (Math.PI / 180);
 
-        const radius_of_belt = 20;
-        const thickness_of_ring = 8.0;
-        const location = (Math.random() - 0.5) * thickness_of_ring;
+            const radius_of_belt = radius;
+            const thickness_of_ring = 8.0;
+            const location = (Math.random() - 0.5) * thickness_of_ring;
 
-        const x = Math.cos(angle) * (radius_of_belt + location);
-        const y = 0.0;
-        const z = Math.sin(angle) * (radius_of_belt + location);
+            const x = Math.cos(angle) * (radius_of_belt + location);
+            const y = 0.0;
+            const z = Math.sin(angle) * (radius_of_belt + location);
     
-        positions[i * 3 + 0] = x;
-        positions[i * 3 + 1] = y;
-        positions[i * 3 + 2] = z;
-}
-    const geometry = new three.BufferGeometry();
-    geometry.setAttribute("position", new three.BufferAttribute(positions, 3));
-    const material = new three.PointsMaterial({
-        size: 0.4,
-        color: 0xFFFFFF,
-        opacity: 0.1,
-    });
+            positions[i * 3 + 0] = x;
+            positions[i * 3 + 1] = y;
+            positions[i * 3 + 2] = z;
+    }      
+        const geometry = new three.BufferGeometry();
+        geometry.setAttribute("position", new three.BufferAttribute(positions, 3));
+        const material = new three.PointsMaterial({
+            size: 0.4,
+            color: 0xFFFFFF,
+            opacity: 0.1,
+        });
 
-    const particles = new three.Points(geometry, material);
+        return new three.Points(geometry, material);
+    }
 
     const planets = {
     sun: {
@@ -272,9 +275,11 @@ function createLabel(name) {
 }
 
     const planetLabels = {};
-    const asteroid_belt = addAsteroidField(20);
-    const kepler_belt = addAsteroidField(40);
+    const asteroid_belt = addAsteroidField(20, 500);
+    const kepler_belt = addAsteroidField(40, 1000);
     asteroid_fields.push(asteroid_belt);
+    const dust = addDustParticles(20);
+    const kepler_dust = addDustParticles(40);
     function init() {
         
         let can=document.getElementById('area');
@@ -328,7 +333,8 @@ function createLabel(name) {
         planetMeshes.jupiter.add(jupRingMesh);
         planetMeshes.uranus.add(uranusRMesh);
 
-        scene.add(particles);
+        scene.add(dust);
+        scene.add(kepler_dust);
         scene.add(asteroid_belt.points);
         scene.add(kepler_belt.points);
         const checkbox = document.getElementById('showAxis');
@@ -366,7 +372,7 @@ function createLabel(name) {
         }
         asteroid_belt.mat.uniforms.time.value = clock.getElapsedTime();
         kepler_belt.mat.uniforms.time.value = clock.getElapsedTime();
-        particles.rotation.y += 0.01;
+        // dust.rotation.y += 0.01;
     };
 
     window.onload=init();
