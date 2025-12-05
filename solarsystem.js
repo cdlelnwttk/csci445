@@ -23,7 +23,7 @@
     
     const materialSpike = new three.ShaderMaterial({
         uniforms: {
-            spikeHeight: { value: 16.0 },
+            spikeHeight: { value: 18.0 },
             spikeFreq: { value: 25.0 } ,
             time: { value: 0.0 },
             noise: {value: noiseSimplex}
@@ -75,7 +75,7 @@
             fragmentShader: asteroidFragment,
             uniforms: {
                 radius: { value: givenRadius },
-                size: { value: 13.0 },
+                size: { value: 10.0 },
                 map: { value: asteroidTexture },
                 time: {value: 0.0},
                 noise: {value: noiseTexture}
@@ -328,9 +328,11 @@ function createLabel(name) {
         controls.dragToLook = true;
 
         scene = new three.Scene();
-        scene.add(spike);
-        scene.add(planetMeshes.sun);
 
+        scene.add(planetMeshes.sun);
+        scene.add(spike);
+
+        
         let sunLabel = createLabel("Sun");
         sunLabel.position.set(0, planets.sun.size + 2, 0);
         planetLabels["Sun"] = sunLabel;

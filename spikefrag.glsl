@@ -1,19 +1,15 @@
-varying vec3 our_uv;
-uniform float time;
-uniform sampler2D noise;
+uniform float time; 
+varying vec2 noise_uv;
 
 void main() {
-    vec3 red    = vec3(1.0, 0.1, 0.0);
-    vec3 orange = vec3(1.0, 0.5, 0.0);
-    vec3 yellow = vec3(1.0, 0.9, 0.2);
+    vec3 red    = vec3(1.0, 0.0, 0.0);
+    vec3 orange = vec3(1.0, 0.8, 0.0);  
+    vec3 yellow = vec3(1.0, 1.0, 0.0);
 
-    vec2 uv = our_uv.xy * 0.5 + 0.5;
-    uv += vec2(time * 0.1, 0.0); 
+    vec2 uv = fract(noise_uv + vec2(time * 1.2, 0.0));
 
-    float noiseValue = texture2D(noise, uv * 8.0).r;
+    vec3 color = mix(yellow, orange, uv.y);
+    color = mix(color, red, sin(uv.y));
 
-    vec3 color = mix(red, orange, noiseValue);
-
-    gl_FragColor = vec4(orange, 1.0); 
+    gl_FragColor = vec4(color, 1.0);
 }
-
