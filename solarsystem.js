@@ -13,7 +13,74 @@
 
     const vertexShaderSource=await getFileContents("./vertexShader.glsl");
     const fragmentShaderSource=await getFileContents("./ringFragment.glsl");
+
+    const asteroidVertex=await getFileContents("./asteroidVertex.glsl");
+    const asteroidFragment=await getFileContents("./asteroidFragment.glsl");
+
     const textureLoader = new three.TextureLoader();
+
+
+
+    const particleCount = 5000;
+    const positions = new Float32Array(particleCount * 3);
+    
+    for (let i = 0; i < particleCount; i++) {
+        const angle = Math.random() * 360 * (Math.PI / 180);
+
+        const radius_of_belt = 20;
+        const thickness_of_ring = 8.0;
+        const location = (Math.random() - 0.5) * thickness_of_ring;
+
+        const x = Math.cos(angle) * (radius_of_belt + location);
+        const y = 0.0;
+        const z = Math.sin(angle) * (radius_of_belt + location);
+    
+        positions[i * 3 + 0] = x;
+        positions[i * 3 + 1] = y;
+        positions[i * 3 + 2] = z;
+}
+    const geometry = new three.BufferGeometry();
+    geometry.setAttribute("position", new three.BufferAttribute(positions, 3));
+    const material = new three.PointsMaterial({
+        size: 0.4,
+        color: 0xFFFFFF,
+        opacity: 0.1,
+    });
+
+    const particles = new three.Points(geometry, material);
+
+
+    const number_of_asteroids = 500;
+    const asteroid_positions = new Float32Array(number_of_asteroids * 3);
+    const angles = new Float32Array(number_of_asteroids);
+    const offsets = new Float32Array(number_of_asteroids);
+    const speeds = new Float32Array(number_of_asteroids);
+    for (let i = 0; i < number_of_asteroids; i++) {
+        angles[i] = Math.random() * 2 * Math.PI;
+        offsets[i] = (Math.random() - 0.5) * 8;
+        speeds[i] = (Math.random()) * 2;
+    }
+
+    const asteroid_geo = new three.BufferGeometry();
+    asteroid_geo.setAttribute('position', new three.BufferAttribute(asteroid_positions, 3));
+    asteroid_geo.setAttribute('angle', new three.BufferAttribute(angles, 1));
+    asteroid_geo.setAttribute('offset', new three.BufferAttribute(offsets, 1));
+    asteroid_geo.setAttribute('speed', new three.BufferAttribute(speeds, 1));
+    const asteroidTexture = new three.TextureLoader().load('planets/asteroid.jpg');
+
+    const asteroid_mat = new three.ShaderMaterial({
+        vertexShader: asteroidVertex,
+        fragmentShader: asteroidFragment,
+        uniforms: {
+            radius: { value: 20.0 },
+            size: { value: 8.0 },
+            map: { value: asteroidTexture },
+            time: {value: 0.0},
+        },
+    });
+
+
+const asteroids = new three.Points(asteroid_geo, asteroid_mat);
 
     const planets = {
     sun: {
@@ -52,14 +119,14 @@
     },
     jupiter: {
         texture: textureLoader.load('planets/jupiter.jpg'),
-        position: new three.Vector3(0, 0, 22.0),
+        position: new three.Vector3(0, 0, 25.0),
         size: 2.0,
         speed: 0.01,
         rotation: 3 * Math.PI / 180
     },
     saturn: {
         texture: textureLoader.load('planets/saturn.jpg'),
-        position: new three.Vector3(0, 0, 28.0),
+        position: new three.Vector3(0, 0, 30.0),
         size: 1.8,
         speed: 0.005,
         rotation: 27 * Math.PI / 180
@@ -214,7 +281,7 @@ function createLabel(name) {
         renderer.setAnimationLoop(animate);
         
         controls = new FlyControls(camera, renderer.domElement);
-        controls.movementSpeed = 10;
+        controls.movementSpeed = 80;
         controls.rollSpeed = Math.PI / 24;
         controls.autoForward = false;
         controls.dragToLook = true;
@@ -252,6 +319,9 @@ function createLabel(name) {
         planetMeshes.saturn.add(saturnRingMesh);
         planetMeshes.jupiter.add(jupRingMesh);
         planetMeshes.uranus.add(uranusRMesh);
+
+        scene.add(particles);
+        scene.add(asteroids);
         const checkbox = document.getElementById('showAxis');
         checkbox.addEventListener('change', () => {
             for (let name in planetAxes) {
@@ -285,6 +355,8 @@ function createLabel(name) {
         for (let name in planetOrbits) {
             planetOrbits[name].rotation.y += planets[name].speed;
         }
+        asteroid_mat.uniforms.time.value = clock.getElapsedTime();
+        particles.rotation.y += 0.01;
     };
 
     window.onload=init();
