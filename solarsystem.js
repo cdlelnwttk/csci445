@@ -9,6 +9,30 @@
         .then((response)=>response.text())
         .then((text)=>{return text});
     }
+    const textureLoader = new three.TextureLoader();
+    const noiseSimplex = new three.TextureLoader().load('simplex_noise.png')
+    const spikeV=await getFileContents("./spikeVertex.glsl");
+    const spikeF=await getFileContents("./spikefrag.glsl");
+
+    const geometrySpike = new three.SphereGeometry(1, 128, 128);
+    
+    const materialSpike = new three.ShaderMaterial({
+        uniforms: {
+            spikeHeight: { value: 16.0 },
+            spikeFreq: { value: 25.0 } ,
+            time: { value: 0.0 },
+            noise: {value: noiseSimplex}
+        },
+        vertexShader: spikeV,
+        fragmentShader: spikeF,
+        side: three.DoubleSide,
+        transparent: true,
+        depthWrite: false,
+        additiveBlending: true,
+        depthTest: true
+    });
+    
+    const spike = new three.Mesh(geometrySpike, materialSpike);
 
     const vertexShaderSource=await getFileContents("./vertexShader.glsl");
     const fragmentShaderSource=await getFileContents("./ringFragment.glsl");
@@ -16,7 +40,6 @@
     const asteroidVertex=await getFileContents("./asteroidVertex.glsl");
     const asteroidFragment=await getFileContents("./asteroidFragment.glsl");
 
-    const textureLoader = new three.TextureLoader();
     const asteroidTexture = new three.TextureLoader().load('planets/asteroid.jpg');
     const noiseTexture = new three.TextureLoader().load('perlin_noise.png')
     const asteroid_fields = [];
@@ -30,7 +53,7 @@
         const speeds = new Float32Array(number_of_asteroids);
         for (let i = 0; i < number_of_asteroids; i++) {
             angles[i] = Math.random() * 2 * Math.PI;
-            offsets[i] = (Math.random() - 0.5) * 8;
+            offsets[i] = (Math.random() - 0.5) * 20;
             speeds[i] = (Math.random()) * 2;
         }
 
@@ -47,7 +70,7 @@
             fragmentShader: asteroidFragment,
             uniforms: {
                 radius: { value: givenRadius },
-                size: { value: 11.0 },
+                size: { value: 13.0 },
                 map: { value: asteroidTexture },
                 time: {value: 0.0},
                 noise: {value: noiseTexture}
@@ -68,7 +91,7 @@
             const angle = Math.random() * 360 * (Math.PI / 180);
 
             const radius_of_belt = radius;
-            const thickness_of_ring = 8.0;
+            const thickness_of_ring = 14.0;
             const location = (Math.random() - 0.5) * thickness_of_ring;
 
             const x = Math.cos(angle) * (radius_of_belt + location);
@@ -94,62 +117,62 @@
     sun: {
         texture: textureLoader.load('planets/sun.jpg'),
         position: new three.Vector3(0, 0, 0),
-        size: 3.0,
+        size: 10.0,
     },
     mercury: {
         texture: textureLoader.load('planets/mercury.jpg'),
-        position: new three.Vector3(0, 0, 5.0),
-        size: 0.75,
+        position: new three.Vector3(0, 0, 17.0),
+        size: 2.0,
         speed: 0.05,
         rotation: 98 * Math.PI / 180
 
     },
     venus: {
         texture: textureLoader.load('planets/venus.jpg'),
-        position: new three.Vector3(0, 0, 8.0),
-        size: 1,
+        position: new three.Vector3(0, 0, 28.0),
+        size: 3.0,
         speed: 0.03,
         rotation: 174 * Math.PI / 180
     },
     earth: {
         texture: textureLoader.load('planets/earth.jpg'),
-        position: new three.Vector3(0, 0, 11.0),
-        size: 1,
+        position: new three.Vector3(0, 0, 37.0),
+        size: 3.0,
         speed: 0.025,
         rotation: 24 * Math.PI / 180
     },
     mars: {
         texture: textureLoader.load('planets/mars.jpg'),
-        position: new three.Vector3(0, 0, 15.0),
-        size: 0.8,
+        position: new three.Vector3(0, 0, 45.0),
+        size: 2.5,
         speed: 0.02,
         rotation: 25 * Math.PI / 180
     },
     jupiter: {
         texture: textureLoader.load('planets/jupiter.jpg'),
-        position: new three.Vector3(0, 0, 25.0),
-        size: 2.0,
+        position: new three.Vector3(0, 0, 75.0),
+        size: 8.0,
         speed: 0.01,
         rotation: 3 * Math.PI / 180
     },
     saturn: {
         texture: textureLoader.load('planets/saturn.jpg'),
-        position: new three.Vector3(0, 0, 30.0),
-        size: 1.8,
+        position: new three.Vector3(0, 0, 90.0),
+        size: 7.0,
         speed: 0.005,
         rotation: 27 * Math.PI / 180
     },
     uranus: {
         texture: textureLoader.load('planets/uranus.jpg'),
-        position: new three.Vector3(0, 0, 33.0),
-        size: 1.6,
+        position: new three.Vector3(0, 0, 110.0),
+        size: 6.0,
         speed: 0.001,
         rotation: 98 * Math.PI / 180
     },
     neptune: {
         texture: textureLoader.load('planets/neptune.jpg'),
-        position: new three.Vector3(0, 0, 38.0),
-        size: 1.5,
+        position: new three.Vector3(0, 0, 130.0),
+        size: 5.5,
         speed: 0.000005,
         rotation: 28 * Math.PI / 180
     }
@@ -209,7 +232,7 @@
     side: three.DoubleSide
 });
 
-const ringGeometry = new three.RingGeometry(3.0, 2.4)
+const ringGeometry = new three.RingGeometry(12.0, 15.0)
 const saturnRingMesh = new three.Mesh(ringGeometry, ringMaterial);
 saturnRingMesh.rotation.x = Math.PI / 2;
 
@@ -238,14 +261,14 @@ jupRingMesh.rotation.x = Math.PI / 2;
 
 function createLabel(name) {
     const canvas = document.createElement('canvas');
-    const size = 256;
+    const size = 3000;
     canvas.width = size;
     canvas.height = size;
     const ctx = canvas.getContext('2d');
 
     ctx.clearRect(0, 0, size, size);
 
-    ctx.font = '30px Arial';
+    ctx.font = '800px Arial';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
@@ -275,17 +298,17 @@ function createLabel(name) {
 }
 
     const planetLabels = {};
-    const asteroid_belt = addAsteroidField(20, 500);
-    const kepler_belt = addAsteroidField(40, 1000);
-    asteroid_fields.push(asteroid_belt);
-    const dust = addDustParticles(20);
-    const kepler_dust = addDustParticles(40);
+    // const asteroid_belt = addAsteroidField(60, 500);
+    // const kepler_belt = addAsteroidField(150, 1000);
+    // asteroid_fields.push(asteroid_belt);
+    // const dust = addDustParticles(60);
+    // const kepler_dust = addDustParticles(150);
     function init() {
         
         let can=document.getElementById('area');
         camera = new three.PerspectiveCamera( 25, (window.innerWidth / window.innerHeight), 0.1, 10000);
         camera.position.z = 100;
-        camera.position.set(0, 120, 100);
+        camera.position.set(0, 400, 400);
         camera.lookAt(new three.Vector3(0, 0, 0));
     
 
@@ -300,7 +323,9 @@ function createLabel(name) {
         controls.dragToLook = true;
 
         scene = new three.Scene();
+        scene.add(spike);
         scene.add(planetMeshes.sun);
+
         let sunLabel = createLabel("Sun");
         sunLabel.position.set(0, planets.sun.size + 2, 0);
         planetLabels["Sun"] = sunLabel;
@@ -333,10 +358,10 @@ function createLabel(name) {
         planetMeshes.jupiter.add(jupRingMesh);
         planetMeshes.uranus.add(uranusRMesh);
 
-        scene.add(dust);
-        scene.add(kepler_dust);
-        scene.add(asteroid_belt.points);
-        scene.add(kepler_belt.points);
+        // scene.add(dust);
+        // scene.add(kepler_dust);
+        // scene.add(asteroid_belt.points);
+        // scene.add(kepler_belt.points);
         const checkbox = document.getElementById('showAxis');
         checkbox.addEventListener('change', () => {
             for (let name in planetAxes) {
@@ -370,9 +395,12 @@ function createLabel(name) {
         for (let name in planetOrbits) {
             planetOrbits[name].rotation.y += planets[name].speed;
         }
-        asteroid_belt.mat.uniforms.time.value = clock.getElapsedTime();
-        kepler_belt.mat.uniforms.time.value = clock.getElapsedTime();
+        // asteroid_belt.mat.uniforms.time.value = clock.getElapsedTime();
+        // kepler_belt.mat.uniforms.time.value = clock.getElapsedTime();
         // dust.rotation.y += 0.01;
+        spike.rotation.y += 0.01;
+        spike.material.uniforms.time.value = clock.getElapsedTime();
+        // spike.materialSpike.time += 0.001;
     };
 
     window.onload=init();

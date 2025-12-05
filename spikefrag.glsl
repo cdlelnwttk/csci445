@@ -1,26 +1,19 @@
-// uniform vec3 baseColor;
-// varying vec3 vPos;
-
-// void main() {
-//     gl_FragColor = vec4(baseColor, 1.0);
-// }
-
-uniform vec3 baseColor;
-varying vec2 vPos;
+varying vec3 our_uv;
 uniform float time;
+uniform sampler2D noise;
 
 void main() {
-    float t = sin(time * 7.0) * 0.5 + 0.5;
-
-    vec3 red    = vec3(1.0, 0.0, 0.0);
+    vec3 red    = vec3(1.0, 0.1, 0.0);
     vec3 orange = vec3(1.0, 0.5, 0.0);
-    vec3 color = mix(red, orange, t);
+    vec3 yellow = vec3(1.0, 0.9, 0.2);
 
-    gl_FragColor = vec4(color, 0.5); 
+    vec2 uv = our_uv.xy * 0.5 + 0.5;
+    uv += vec2(time * 0.1, 0.0); 
+
+    float noiseValue = texture2D(noise, uv).r;
+
+    vec3 color = mix(red, orange, noiseValue);
+
+    gl_FragColor = vec4(color, 1.0); 
 }
 
-
-// uniform vec3 baseColor;
-// void main() {
-//     gl_FragColor = vec4(baseColor, 1.0);
-// }
