@@ -10,10 +10,10 @@ void main() {
     vec2 uv = our_uv.xy * 0.5 + 0.5;
     uv += vec2(time * 0.1, 0.0); 
 
-    float noiseValue = texture2D(noise, uv).r;
+    float noiseValue = texture2D(noise, uv * 8.0).r;
 
     vec3 color = mix(red, orange, noiseValue);
 
-    gl_FragColor = vec4(color, 1.0); 
+    gl_FragColor = vec4(orange, 1.0); 
 }
 

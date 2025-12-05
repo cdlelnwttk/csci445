@@ -14,6 +14,11 @@
     const spikeV=await getFileContents("./spikeVertex.glsl");
     const spikeF=await getFileContents("./spikefrag.glsl");
 
+    noiseSimplex.wrapS = three.RepeatWrapping;
+    noiseSimplex.wrapT = three.RepeatWrapping;
+    noiseSimplex.minFilter = three.LinearFilter;
+    noiseSimplex.magFilter = three.LinearFilter;
+
     const geometrySpike = new three.SphereGeometry(1, 128, 128);
     
     const materialSpike = new three.ShaderMaterial({
@@ -298,11 +303,11 @@ function createLabel(name) {
 }
 
     const planetLabels = {};
-    // const asteroid_belt = addAsteroidField(60, 500);
-    // const kepler_belt = addAsteroidField(150, 1000);
-    // asteroid_fields.push(asteroid_belt);
-    // const dust = addDustParticles(60);
-    // const kepler_dust = addDustParticles(150);
+    const asteroid_belt = addAsteroidField(60, 500);
+    const kepler_belt = addAsteroidField(150, 1000);
+    asteroid_fields.push(asteroid_belt);
+    const dust = addDustParticles(60);
+    const kepler_dust = addDustParticles(150);
     function init() {
         
         let can=document.getElementById('area');
@@ -358,10 +363,10 @@ function createLabel(name) {
         planetMeshes.jupiter.add(jupRingMesh);
         planetMeshes.uranus.add(uranusRMesh);
 
-        // scene.add(dust);
-        // scene.add(kepler_dust);
-        // scene.add(asteroid_belt.points);
-        // scene.add(kepler_belt.points);
+        scene.add(dust);
+        scene.add(kepler_dust);
+        scene.add(asteroid_belt.points);
+        scene.add(kepler_belt.points);
         const checkbox = document.getElementById('showAxis');
         checkbox.addEventListener('change', () => {
             for (let name in planetAxes) {
@@ -395,9 +400,9 @@ function createLabel(name) {
         for (let name in planetOrbits) {
             planetOrbits[name].rotation.y += planets[name].speed;
         }
-        // asteroid_belt.mat.uniforms.time.value = clock.getElapsedTime();
-        // kepler_belt.mat.uniforms.time.value = clock.getElapsedTime();
-        // dust.rotation.y += 0.01;
+        asteroid_belt.mat.uniforms.time.value = clock.getElapsedTime();
+        kepler_belt.mat.uniforms.time.value = clock.getElapsedTime();
+        dust.rotation.y += 0.01;
         spike.rotation.y += 0.01;
         spike.material.uniforms.time.value = clock.getElapsedTime();
         // spike.materialSpike.time += 0.001;
