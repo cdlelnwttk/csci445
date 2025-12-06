@@ -1,6 +1,7 @@
 
     import * as three from 'three';
     import { FlyControls } from 'three/addons/FlyControls.js';
+
     let camera, scene, renderer, controls;
     const clock = new three.Clock();
 
@@ -19,22 +20,21 @@
     noiseSimplex.minFilter = three.LinearFilter;
     noiseSimplex.magFilter = three.LinearFilter;
 
+
     const geometrySpike = new three.SphereGeometry(1, 128, 128);
     
     const materialSpike = new three.ShaderMaterial({
         uniforms: {
-            spikeHeight: { value: 18.0 },
-            spikeFreq: { value: 25.0 } ,
+            spikeHeight: { value: 20.0 },
+            spikeFreq: { value: 50.0 } ,
             time: { value: 0.0 },
             noise: {value: noiseSimplex}
         },
         vertexShader: spikeV,
         fragmentShader: spikeF,
         side: three.DoubleSide,
-        transparent: true,
-        depthWrite: false,
-        additiveBlending: true,
-        depthTest: true
+        // transparent: true,
+        // additiveBlending: true,
     });
     
     const spike = new three.Mesh(geometrySpike, materialSpike);
@@ -187,7 +187,7 @@
     for (let name in planets) {
 
         const geometry = new three.SphereGeometry(planets[name].size, 32, 32);
-        const material = new three.MeshBasicMaterial({ map: planets[name].texture });
+        const material = new three.MeshBasicMaterial({ map: planets[name].texture },);
         const mesh = new three.Mesh(geometry, material);
         mesh.position.copy(planets[name].position);
         planetMeshes[name] = mesh;
@@ -313,16 +313,15 @@ function createLabel(name) {
         let can=document.getElementById('area');
         camera = new three.PerspectiveCamera( 25, (window.innerWidth / window.innerHeight), 0.1, 10000);
         camera.position.z = 100;
-        camera.position.set(0, 400, 400);
+        camera.position.set(0, 500, 400);
         camera.lookAt(new three.Vector3(0, 0, 0));
     
 
         renderer = new three.WebGLRenderer({ antialias: true, canvas: can });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setAnimationLoop(animate);
-        
         controls = new FlyControls(camera, renderer.domElement);
-        controls.movementSpeed = 80;
+        controls.movementSpeed = 120;
         controls.rollSpeed = Math.PI / 24;
         controls.autoForward = false;
         controls.dragToLook = true;
@@ -332,7 +331,7 @@ function createLabel(name) {
         scene.add(planetMeshes.sun);
         scene.add(spike);
 
-        
+    
         let sunLabel = createLabel("Sun");
         sunLabel.position.set(0, planets.sun.size + 2, 0);
         planetLabels["Sun"] = sunLabel;
@@ -368,7 +367,10 @@ function createLabel(name) {
         scene.add(dust);
         scene.add(kepler_dust);
         scene.add(asteroid_belt.points);
-        scene.add(kepler_belt.points);
+        scene.add(kepler_belt.points);  
+
+        const helper = new three.PointLightHelper(sunLight, 20.0);
+        scene.add(helper);
         const checkbox = document.getElementById('showAxis');
         checkbox.addEventListener('change', () => {
             for (let name in planetAxes) {
