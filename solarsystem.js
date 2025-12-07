@@ -2,6 +2,7 @@
     import * as three from 'three';
     import { FlyControls } from 'three/addons/FlyControls.js';
 
+    //  NEEED TO ADD CORRECT SPEEDS FOR THEIR ROTATION 
     let camera, scene, renderer, controls;
     const clock = new three.Clock();
 
@@ -33,7 +34,6 @@
         vertexShader: spikeV,
         fragmentShader: spikeF,
         side: three.DoubleSide,
-        // transparent: true,
         // additiveBlending: true,
     });
     
@@ -403,6 +403,7 @@ function createLabel(name) {
         planetMeshes.sun.rotation.y += 0.01; 
         for (let name in planetOrbits) {
             planetOrbits[name].rotation.y += planets[name].speed;
+            planetMeshes[name].rotation.y += 0.5;
         }
         asteroid_belt.mat.uniforms.time.value = clock.getElapsedTime();
         kepler_belt.mat.uniforms.time.value = clock.getElapsedTime();
