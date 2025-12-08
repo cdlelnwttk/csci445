@@ -3,7 +3,15 @@
     import { FlyControls } from 'three/addons/FlyControls.js';
     import { TextGeometry } from 'three/addons/TextGeometry.js';
     import { FontLoader } from 'three/addons/FontLoader.js';
-
+    import { Pass } from 'three/addons/Pass.js';
+    import { ShaderPass } from 'three/addons/ShaderPass.js'
+    import { CopyShader } from 'three/addons/shaders/CopyShader.js'
+    import { LuminosityHighPassShader } from 'three/addons/shaders/LuminosityHighPassShader.js'
+    import { MaskPass } from 'three/addons/MaskPass.js';
+    import { EffectComposer } from 'three/addons/EffectComposer.js';
+    import { RenderPass } from 'three/addons/RenderPass.js';
+    import { UnrealBloomPass } from 'three/addons/UnrealBloomPass.js';
+    
     let camera, scene, renderer, controls;
     const clock = new three.Clock();
 
@@ -24,7 +32,6 @@
     noiseSimplex.wrapT = three.RepeatWrapping;
     noiseSimplex.minFilter = three.LinearFilter;
     noiseSimplex.magFilter = three.LinearFilter;
-
 
     //PLANET RELATED FUNCTIONS 
     function addAxis(length)
@@ -91,12 +98,15 @@
     }
 
 
+
+    
+
     const geometrySpike = new three.SphereGeometry(1, 128, 128);
     
     const materialSpike = new three.ShaderMaterial({
         uniforms: {
-            spikeHeight: { value: 20.0 },
-            spikeFreq: { value: 50.0 } ,
+            spikeHeight: { value: 10.0 },
+            spikeFreq: { value: 20.0 } ,
             time: { value: 0.0 },
             noise: {value: noiseSimplex}
         },
@@ -339,7 +349,7 @@ jupRingMesh.rotation.x = Math.PI / 2;
         scene = new three.Scene();
 
         scene.add(planetMeshes.sun);
-        // scene.add(spike);
+        scene.add(spike);
 
     
         let sunLabel = addLabel("Sun");
@@ -417,6 +427,7 @@ jupRingMesh.rotation.x = Math.PI / 2;
         const delta = clock.getDelta();
         controls.update(delta);
         renderer.render( scene, camera );
+        // composer.render();
         planetMeshes.sun.rotation.y += 0.01; 
         for (let name in planetOrbits) {
             // planetOrbits[name].rotation.y += planets[name].speed;
