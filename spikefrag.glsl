@@ -17,5 +17,5 @@ void main() {
 
     float radius = 1.0;
     if (dist < radius) discard;
-    gl_FragColor = vec4(color, 0.01);
+    gl_FragColor = vec4(color * 10.0, 1.0);
 }

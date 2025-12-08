@@ -11,8 +11,8 @@
     import { EffectComposer } from 'three/addons/EffectComposer.js';
     import { RenderPass } from 'three/addons/RenderPass.js';
     import { UnrealBloomPass } from 'three/addons/UnrealBloomPass.js';
-    
-    let camera, scene, renderer, controls;
+
+    let camera, scene, renderer, controls, composer;
     const clock = new three.Clock();
 
     async function getFileContents(filename){
@@ -105,7 +105,7 @@
     
     const materialSpike = new three.ShaderMaterial({
         uniforms: {
-            spikeHeight: { value: 10.0 },
+            spikeHeight: { value: 20.0 },
             spikeFreq: { value: 20.0 } ,
             time: { value: 0.0 },
             noise: {value: noiseSimplex}
@@ -113,7 +113,7 @@
         vertexShader: spikeV,
         fragmentShader: spikeF,
         side: three.DoubleSide,
-        // additiveBlending: true,
+        blending: three.AdditiveBlending
     });
     
     const spike = new three.Mesh(geometrySpike, materialSpike);
@@ -340,18 +340,25 @@ jupRingMesh.rotation.x = Math.PI / 2;
         renderer = new three.WebGLRenderer({ antialias: true, canvas: can });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setAnimationLoop(animate);
+
+        scene = new three.Scene();
+
+
+        composer = new EffectComposer(renderer);
+        const renderPass = new RenderPass(scene, camera);
+        composer.addPass(renderPass);
+        const bloomPass = new UnrealBloomPass({ x: window.innerWidth, y: window.innerHeight }, 0.3, 1.0, 0.00);
+        bloomPass.clearColor = new three.Color(0x220011); 
+        composer.addPass(bloomPass);
+
         controls = new FlyControls(camera, renderer.domElement);
         controls.movementSpeed = 120;
         controls.rollSpeed = Math.PI / 24;
         controls.autoForward = false;
         controls.dragToLook = true;
 
-        scene = new three.Scene();
-
         scene.add(planetMeshes.sun);
         scene.add(spike);
-
-    
         let sunLabel = addLabel("Sun");
         // sunLabel.position.set(0, planets.sun.size + 20, 0);
         planetLabels["Sun"] = sunLabel;
@@ -427,6 +434,7 @@ jupRingMesh.rotation.x = Math.PI / 2;
         const delta = clock.getDelta();
         controls.update(delta);
         renderer.render( scene, camera );
+        composer.render();
         // composer.render();
         planetMeshes.sun.rotation.y += 0.01; 
         for (let name in planetOrbits) {
