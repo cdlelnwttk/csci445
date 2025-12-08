@@ -1,8 +1,9 @@
 
     import * as three from 'three';
     import { FlyControls } from 'three/addons/FlyControls.js';
+    import { TextGeometry } from 'three/addons/TextGeometry.js';
+    import { FontLoader } from 'three/addons/FontLoader.js';
 
-    //  NEEED TO ADD CORRECT SPEEDS FOR THEIR ROTATION 
     let camera, scene, renderer, controls;
     const clock = new three.Clock();
 
@@ -12,14 +13,73 @@
         .then((text)=>{return text});
     }
     const textureLoader = new three.TextureLoader();
+
+
     const noiseSimplex = new three.TextureLoader().load('simplex_noise.png')
     const spikeV=await getFileContents("./spikeVertex.glsl");
     const spikeF=await getFileContents("./spikefrag.glsl");
-
+    const fontJsonStr = await getFileContents("./font.typeface.json");
+    const font = new FontLoader().parse(JSON.parse(fontJsonStr));
     noiseSimplex.wrapS = three.RepeatWrapping;
     noiseSimplex.wrapT = three.RepeatWrapping;
     noiseSimplex.minFilter = three.LinearFilter;
     noiseSimplex.magFilter = three.LinearFilter;
+
+
+    //PLANET RELATED FUNCTIONS 
+    function addAxis(length)
+    {
+        const axis = new three.Object3D();
+        const points = [
+            new three.Vector3(0, -length, 0),
+            new three.Vector3(0,  length, 0)
+    ];
+
+        const geometry = new three.BufferGeometry().setFromPoints(points);
+        const material = new three.LineBasicMaterial({color: 0x00ff00});
+        const axisLine = new three.Line(geometry, material);
+
+        axis.add(axisLine);
+        return axis;
+    }
+
+    function addOrbitPath(radius)
+    {
+        const path = new three.Object3D();
+
+        const geometry = new three.TorusGeometry(radius, 0.1, 60, 100);
+        const material = new three.MeshBasicMaterial(
+            {   
+                color: 0xffffff, 
+                transparent: true, 
+                opacity: 1.0
+            });
+
+        const mesh = new three.Mesh(geometry, material);
+
+        mesh.rotation.x = Math.PI / 2;
+        path.add(mesh);
+        return path;
+    }
+
+    function addLabel(name)
+    {
+        const object = new three.Object3D();
+        const geometry = new TextGeometry(name,
+            {
+	            font: font,
+	            size: 11,
+	            depth: 2,
+	            curveSegments: 12,
+                transparent: true
+            });
+        geometry.center();
+
+        const material = new three.MeshBasicMaterial({ color: 0xffffff });
+        const mesh = new three.Mesh(geometry, material);
+        object.add(mesh);
+        return object;
+    }
 
 
     const geometrySpike = new three.SphereGeometry(1, 128, 128);
@@ -195,28 +255,6 @@
 
     const planetOrbits = {}
 
-    function addZAxis(object, length) {
-        const points = [
-            new three.Vector3(0, -length, 0),
-            new three.Vector3(0,  length, 0)
-        ];
-
-        const geometry = new three.BufferGeometry().setFromPoints(points);
-        const material = new three.LineBasicMaterial({ color: 0x00ff00, transparent: true, opacity: 1.0});
-        const line = new three.Line(geometry, material);
-
-        object.add(line);
-        return line;
-        }
-
-    function addOrbitLine(radius) {
-        const orbitTorus = new three.TorusGeometry(radius, 0.01, 16, 100);
-        const orbitMaterial = new three.MeshBasicMaterial({ color: 0xffffff , transparent: true, opacity: 1.0});
-        const orbitMesh = new three.Mesh(orbitTorus, orbitMaterial);
-        orbitMesh.rotation.x = Math.PI / 2;
-        return orbitMesh;
-    }
-
     const planetAxes = {};
     const planetOrbitLines = {}
 
@@ -264,43 +302,6 @@ const uranusRMesh = new three.Mesh(jupRGeometry, jupRMaterial);
 jupRingMesh.rotation.x = Math.PI / 2;
 
 
-function createLabel(name) {
-    const canvas = document.createElement('canvas');
-    const size = 3000;
-    canvas.width = size;
-    canvas.height = size;
-    const ctx = canvas.getContext('2d');
-
-    ctx.clearRect(0, 0, size, size);
-
-    ctx.font = '800px Arial';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-
-    ctx.lineWidth = 6;          
-    ctx.strokeStyle = 'black';
-    ctx.strokeText(name, size / 2, size / 2);
-
-    ctx.fillStyle = 'white';
-    ctx.fillText(name, size / 2, size / 2);
-
-    const texture = new three.CanvasTexture(canvas);
-    texture.needsUpdate = true;
-    texture.minFilter = three.LinearFilter;
-    texture.magFilter = three.LinearFilter;
-
-    const material = new three.SpriteMaterial({
-        map: texture,
-        transparent: true,
-        alphaTest: 0.1, 
-        depthTest: true,
-        depthWrite: false
-    });
-
-    const sprite = new three.Sprite(material);
-    sprite.scale.set(10, 10, 1);
-    return sprite;
-}
 
     const planetLabels = {};
     const asteroid_belt = addAsteroidField(60, 500);
@@ -329,11 +330,11 @@ function createLabel(name) {
         scene = new three.Scene();
 
         scene.add(planetMeshes.sun);
-        scene.add(spike);
+        // scene.add(spike);
 
     
-        let sunLabel = createLabel("Sun");
-        sunLabel.position.set(0, planets.sun.size + 2, 0);
+        let sunLabel = addLabel("Sun");
+        sunLabel.position.set(0, planets.sun.size + 20, 0);
         planetLabels["Sun"] = sunLabel;
         planetMeshes.sun.add(sunLabel);
 
@@ -345,16 +346,18 @@ function createLabel(name) {
             orbit.add(planetMeshes[name]);
             planetOrbits[name] = orbit;
 
-            let axis = addZAxis(planetMeshes[name], planets[name].size * 3);
+            let axis = addAxis(planets[name].size * 3);
+            planetMeshes[name].add(axis);
             planetAxes[name] = axis; 
+
             planetMeshes[name].rotation.z = planets[name].rotation;
 
             const radius = planets[name].position.z;
-            const orbitMesh = addOrbitLine(radius);
+            const orbitMesh = addOrbitPath(radius);
             planetOrbitLines[name] = orbitMesh;
             planetMeshes.sun.add(orbitMesh);
 
-            let label = createLabel(name);
+            let label = addLabel(name);
             label.position.set(0, planets[name].size + 2, 0);
             planetLabels[name] = label;
             planetMeshes[name].add(label);
@@ -369,8 +372,6 @@ function createLabel(name) {
         scene.add(asteroid_belt.points);
         scene.add(kepler_belt.points);  
 
-        const helper = new three.PointLightHelper(sunLight, 20.0);
-        scene.add(helper);
         const checkbox = document.getElementById('showAxis');
         checkbox.addEventListener('change', () => {
             for (let name in planetAxes) {
@@ -382,9 +383,16 @@ function createLabel(name) {
         checkboxOrbit.addEventListener('change', () => {
             for (let name in planetAxes) {
                 planetOrbitLines[name].visible = checkboxOrbit.checked;
-                planetMeshes.sun.add(planetOrbitLines[name]);
             }
             });
+
+        const checkboxLabel = document.getElementById('showLabels');
+        checkboxLabel.addEventListener('change', () => {
+            for (let name in planetLabels) {
+                planetLabels[name].visible = checkboxLabel.checked;
+            }
+            });
+
         window.addEventListener('resize', () => {
         camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();
@@ -402,8 +410,8 @@ function createLabel(name) {
         renderer.render( scene, camera );
         planetMeshes.sun.rotation.y += 0.01; 
         for (let name in planetOrbits) {
-            planetOrbits[name].rotation.y += planets[name].speed;
-            planetMeshes[name].rotation.y += 0.5;
+            // planetOrbits[name].rotation.y += planets[name].speed;
+            // planetMeshes[name].rotation.y += 0.5;
         }
         asteroid_belt.mat.uniforms.time.value = clock.getElapsedTime();
         kepler_belt.mat.uniforms.time.value = clock.getElapsedTime();
