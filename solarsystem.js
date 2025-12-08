@@ -62,22 +62,31 @@
         return path;
     }
 
+    //FIX Y POSITION
     function addLabel(name)
     {
         const object = new three.Object3D();
         const geometry = new TextGeometry(name,
             {
 	            font: font,
-	            size: 11,
+	            size: 8,
 	            depth: 2,
 	            curveSegments: 12,
-                transparent: true
+                transparent: true,
             });
-        geometry.center();
-
         const material = new three.MeshBasicMaterial({ color: 0xffffff });
         const mesh = new three.Mesh(geometry, material);
+
+        const outlineMaterial = new three.MeshBasicMaterial({ color: 0x800080, transparent: true, opacity: 0.4});
+        const outlineMesh = new three.Mesh(geometry.clone(), outlineMaterial);
+        outlineMesh.scale.multiplyScalar(1.01);
+
+
+        mesh.rotation.x = -Math.PI / 2; 
+        outlineMesh.rotation.x = -Math.PI / 2; 
+
         object.add(mesh);
+        object.add(outlineMesh);
         return object;
     }
 
@@ -334,7 +343,7 @@ jupRingMesh.rotation.x = Math.PI / 2;
 
     
         let sunLabel = addLabel("Sun");
-        sunLabel.position.set(0, planets.sun.size + 20, 0);
+        // sunLabel.position.set(0, planets.sun.size + 20, 0);
         planetLabels["Sun"] = sunLabel;
         planetMeshes.sun.add(sunLabel);
 
@@ -358,7 +367,7 @@ jupRingMesh.rotation.x = Math.PI / 2;
             planetMeshes.sun.add(orbitMesh);
 
             let label = addLabel(name);
-            label.position.set(0, planets[name].size + 2, 0);
+            label.rotation.z = -planetMeshes[name].rotation.z;
             planetLabels[name] = label;
             planetMeshes[name].add(label);
         }
