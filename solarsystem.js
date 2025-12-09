@@ -6,10 +6,9 @@
     import { UnrealBloomPass } from 'three/addons/UnrealBloomPass.js';
     import { Planet } from './Planet.js';
     import { AsteroidField } from './AsteroidField.js';
-
     let camera, scene, renderer, controls, composer;
     const clock = new three.Clock();
-    let initialCameraZ = 1500;
+    let initialCameraZ = 200;
     let baseSize = 30;
 
     async function getFileContents(filename){
@@ -50,7 +49,7 @@
             {
                 uniforms: 
                 {
-                    spikeHeight: { value: 20.0 },
+                    spikeHeight: { value: 40.0 },
                     spikeFreq: { value: 50.0 } ,
                     time: { value: 0.0 },
                     noise: {value: noiseSimplex}
@@ -145,7 +144,7 @@
         texture: textureLoader.load('planets/jupiter.jpg'),
         position: new three.Vector3(0, 0, 300.0),
         size: 20.0,
-        speed: 0.01,
+        speed: 0.002,
         rotation: 3 * Math.PI / 180
     },
     saturn: {
@@ -189,7 +188,7 @@
         let can=document.getElementById('area');
         camera = new three.PerspectiveCamera( 25, (window.innerWidth / window.innerHeight), 0.1, 10000);
         camera.position.z = 100;
-        camera.position.set(0, 2000, initialCameraZ);
+        camera.position.set(0, 1500, initialCameraZ);
         camera.lookAt(new three.Vector3(0, 0, 0));
     
 
@@ -204,7 +203,8 @@
         controls.rollSpeed = Math.PI / 24;
         controls.autoForward = false;
         controls.dragToLook = true;
-        // scene.background = background;
+    
+
         scene.add(sun.planet);
         scene.add(sunEffect);
         scene.add(asteroidBelt.asteroidBelt);
@@ -217,9 +217,13 @@
             sun.planet.add(planetObjects[name].pivot);
         }
         planetObjects["saturn"].addRings(
-            0xC4A484, 0.3, 50.0, 1.0, 12.0, 15.0, genericVertex, ringFragment);
-
-        planetObjects["saturn"].addGlow(genericVertex, glowFragment, 0xD2B48C, 10.0, 5.0);
+            0xC4A484, 0.3, 50.0, 1.0, 23.0, 30.0, genericVertex, ringFragment);
+        planetObjects["jupiter"].addRings(
+            0xffffff, 0.7, 100.0, 0.05, 23.0, 30.0, genericVertex, ringFragment);
+        planetObjects["uranus"].addRings(
+            0xffffff, 0.2, 20.0, 0.2, 23.0, 30.0, genericVertex, ringFragment);
+        planetObjects["neptune"].addRings(
+            0xffffff, 0.7, 100.0, 0.05, 23.0, 30.0, genericVertex, ringFragment);
 
         scene.add(test);
         const axisBox = document.getElementById('showAxis');
@@ -258,13 +262,14 @@
 
             });
 
+
         composer = new EffectComposer(renderer);
+
         const renderPass = new RenderPass(scene, camera);
         composer.addPass(renderPass);
-        const bloomPass = new UnrealBloomPass({ x: window.innerWidth, y: window.innerHeight }, 2.2, 1.5, 0.5);
+        const bloomPass = new UnrealBloomPass({ x: window.innerWidth, y: window.innerHeight }, 2.6, 1.8, 0.5);
         composer.addPass(bloomPass);
-}
-
+    }
 
     function animate() {
         const delta = clock.getDelta();

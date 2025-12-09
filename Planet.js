@@ -11,8 +11,6 @@ export class Planet
 
         const geometry = new three.SphereGeometry(entry.size, 32, 32);
         this.geometry = geometry;
-        // const material = new three.MeshBasicMaterial({ map: entry.texture });
-        // const material = new three.MeshStandardMaterial({ map: entry.texture });
         const material = new three.ShaderMaterial(
             {
                 vertexShader: vShader, 
@@ -69,7 +67,7 @@ export class Planet
 
     addOrbitPath(radius)
     {
-        const geometry = new three.TorusGeometry(radius, 0.5, 120, 100);
+        const geometry = new three.TorusGeometry(radius, 0.4, 200, 100);
         const material = new three.MeshBasicMaterial(
                 {   
                     color: 0xffffff, 
@@ -164,7 +162,6 @@ export class Planet
             blending: three.AdditiveBlending
         });
 
-        // const geometry = new three.TorusGeometry((this.mesh.geometry.parameters.radius + 0.2), 0.2, 50);
         const geometry = this.mesh.geometry;
         const mesh = new three.Mesh(geometry, material);
         this.tilt.add(mesh);

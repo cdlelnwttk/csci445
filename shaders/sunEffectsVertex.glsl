@@ -14,11 +14,11 @@ void main() {
     float spike = cos((position.x *  spikeFreq + time * n * 2.0)) *
                   cos(position.y  * spikeFreq + time * n * 5.0) *
                   cos(position.z * spikeFreq + time * n* 6.0) * 
-                  spikeHeight * 2.0;
+                  spikeHeight;
 
     float spike2 = sin(position.x * spikeFreq * 0.2 + time * 3.0) *
                    sin(position.y * spikeFreq * 0.4 + time * 5.0) *
-                   spikeHeight * 0.5;
+                   spikeHeight * 0.1;
     spike += spike2; 
     vec3 newPos = position + normalize(position) * spike;
     gl_Position = projectionMatrix * modelViewMatrix * vec4(newPos, 1.0);
