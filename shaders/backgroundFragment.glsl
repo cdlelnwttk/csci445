@@ -2,7 +2,6 @@ uniform sampler2D noise;
 varying vec2 our_uv;
 varying vec3 pos;
 uniform float time; 
-uniform vec3 color;
 
 void main() {
     float n = texture2D(noise, our_uv * 2.0).r;

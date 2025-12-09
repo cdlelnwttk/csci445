@@ -5,7 +5,6 @@ uniform float spikeHeight;
 uniform float spikeFreq;
 uniform float time;
 uniform sampler2D noise;
-varying float spikeAmount;
 void main() {
     our_uv = position;
     noise_uv = uv;

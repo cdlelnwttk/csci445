@@ -67,7 +67,7 @@ export class Planet
 
     addOrbitPath(radius)
     {
-        const geometry = new three.TorusGeometry(radius, 0.4, 200, 100);
+        const geometry = new three.TorusGeometry(radius, 0.7, 200, 100);
         const material = new three.MeshBasicMaterial(
                 {   
                     color: 0xffffff, 

@@ -6,6 +6,7 @@
     import { UnrealBloomPass } from 'three/addons/UnrealBloomPass.js';
     import { Planet } from './Planet.js';
     import { AsteroidField } from './AsteroidField.js';
+
     let camera, scene, renderer, controls, composer;
     const clock = new three.Clock();
     let initialCameraZ = 200;
@@ -21,13 +22,12 @@
     const asteroidTexture = new three.TextureLoader().load('./planets/asteroid.jpg');
     const noisePerlin = new three.TextureLoader().load('./perlin_noise.png')
     const noiseSimplex = textureLoader.load('./simplex_noise.png');
-    const background = textureLoader.load('./stars.jpg');
 
     const genericVertex = await getFileContents("./shaders/vertexShader.glsl");
 
     const planetFragment = await getFileContents("./shaders/planetFragment.glsl");
     const ringFragment = await getFileContents("./shaders/ringFragment.glsl");
-    const glowFragment = await getFileContents("./shaders/glowFragment.glsl");
+
 
 
     const backgroundVertex = await getFileContents("./shaders/backgroundVertex.glsl");
@@ -66,16 +66,15 @@
     function addBack()
     {
         const numberOfParticles = 8000;
-        const radius = 200;
         const positions = new Float32Array(numberOfParticles * 3);
         
-        const volumeSize = 4000;
+        const cube = 4000;
 
         for (let i = 0; i < numberOfParticles; i++) {
-            const x = (Math.random() - 0.5) * volumeSize;
-            const y = (Math.random() - 0.5) * volumeSize;
+            const x = (Math.random() - 0.5) * cube;
+            const y = (Math.random() - 0.5) * cube;
     
-            const z = (Math.random() - 0.5) * volumeSize;
+            const z = (Math.random() - 0.5) * cube;
             positions[i * 3 + 0] = x;
             positions[i * 3 + 1] = y;
             positions[i * 3 + 2] = z;
@@ -91,7 +90,6 @@
                 {
                     time: { value: 0.0 },
                     noise: {value: noiseSimplex},
-                    color: {value: new three.Color( 0xFFFFFF)},
                     size: {value: 5.0}
                 },
                 side: three.DoubleSide,
@@ -109,14 +107,16 @@
         position: new three.Vector3(0, 0, 0),
         size: 40.0,
         speed: 0.0005,
-        rotation: 0
+        rotation: 0,
+        rotationSpeed: 0.01
     },
     mercury: {
         texture: textureLoader.load('./planets/mercury.jpg'),
         position: new three.Vector3(0, 0, 100.0),
         size: 10.0,
         speed: 0.002,
-        rotation: 98 * Math.PI / 180
+        rotation: 98 * Math.PI / 180,
+        rotationSpeed: 0.02
 
     },
     venus: {
@@ -124,49 +124,56 @@
         position: new three.Vector3(0, 0, 140.0),
         size: 13.0,
         speed: 0.003,
-        rotation: 174 * Math.PI / 180
+        rotation: 174 * Math.PI / 180,
+        rotationSpeed: 0.03
     },
     earth: {
         texture: textureLoader.load('./planets/earth.jpg'),
         position: new three.Vector3(0, 0, 170.0),
         size: 13.0,
         speed: 0.0025,
-        rotation: 24 * Math.PI / 180
+        rotation: 24 * Math.PI / 180,
+        rotationSpeed: 0.04
     },
     mars: {
         texture: textureLoader.load('planets/mars.jpg'),
         position: new three.Vector3(0, 0, 200.0),
         size: 11.0,
         speed: 0.002,
-        rotation: 25 * Math.PI / 180
+        rotation: 25 * Math.PI / 180,
+        rotationSpeed: 0.027
     },
     jupiter: {
         texture: textureLoader.load('planets/jupiter.jpg'),
         position: new three.Vector3(0, 0, 300.0),
         size: 20.0,
-        speed: 0.002,
-        rotation: 3 * Math.PI / 180
+        speed: 0.0023,
+        rotation: 3 * Math.PI / 180,
+        rotationSpeed: 0.05
     },
     saturn: {
         texture: textureLoader.load('planets/saturn.jpg'),
         position: new three.Vector3(0, 0, 370.0),
         size: 18.0,
         speed: 0.005,
-        rotation: 27 * Math.PI / 180
+        rotation: 27 * Math.PI / 180,
+        rotationSpeed: 0.04
     },
     uranus: {
         texture: textureLoader.load('planets/uranus.jpg'),
         position: new three.Vector3(0, 0, 440.0),
         size: 16.0,
         speed: 0.001,
-        rotation: 98 * Math.PI / 180
+        rotation: 98 * Math.PI / 180,
+        rotationSpeed: 0.03
     },
     neptune: {
         texture: textureLoader.load('planets/neptune.jpg'),
         position: new three.Vector3(0, 0, 500.0),
         size: 15.0,
         speed: 0.002,
-        rotation: 28 * Math.PI / 180
+        rotation: 28 * Math.PI / 180,
+        rotationSpeed: 0.02
     }
 };  
     const planetObjects = {};
@@ -188,7 +195,7 @@
         let can=document.getElementById('area');
         camera = new three.PerspectiveCamera( 25, (window.innerWidth / window.innerHeight), 0.1, 10000);
         camera.position.z = 100;
-        camera.position.set(0, 1500, initialCameraZ);
+        camera.position.set(0, 500, initialCameraZ);
         camera.lookAt(new three.Vector3(0, 0, 0));
     
 
@@ -281,8 +288,8 @@
         const zoomFactor = currentCameraZ / initialCameraZ;
         for (let name in planets)
         {
-            planetObjects[name].pivot.rotation.y += planets[name].speed * 2.0;
-            planetObjects[name].mesh.rotation.y += planets[name].speed * 6.0;
+            planetObjects[name].pivot.rotation.y += planets[name].speed;
+            planetObjects[name].mesh.rotation.y += planets[name].rotationSpeed;
             if (planetObjects[name].label.visible)
             {
                 const newScale = zoomFactor * baseSize;
