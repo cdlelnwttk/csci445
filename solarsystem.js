@@ -1,20 +1,16 @@
 
     import * as three from 'three';
     import { FlyControls } from 'three/addons/FlyControls.js';
-    import { TextGeometry } from 'three/addons/TextGeometry.js';
-    import { FontLoader } from 'three/addons/FontLoader.js';
-    import { Pass } from 'three/addons/Pass.js';
-    import { ShaderPass } from 'three/addons/ShaderPass.js'
-    import { CopyShader } from 'three/addons/shaders/CopyShader.js'
-    import { LuminosityHighPassShader } from 'three/addons/shaders/LuminosityHighPassShader.js'
-    import { MaskPass } from 'three/addons/MaskPass.js';
     import { EffectComposer } from 'three/addons/EffectComposer.js';
     import { RenderPass } from 'three/addons/RenderPass.js';
     import { UnrealBloomPass } from 'three/addons/UnrealBloomPass.js';
     import { Planet } from './Planet.js';
+    import { AsteroidField } from './AsteroidField.js';
 
     let camera, scene, renderer, controls, composer;
     const clock = new three.Clock();
+    let initialCameraZ = 1500;
+    let baseSize = 30;
 
     async function getFileContents(filename){
       return fetch(filename)
@@ -23,13 +19,22 @@
     }
     const textureLoader = new three.TextureLoader();
 
-    const noiseSimplex = textureLoader.load('simplex_noise.png');
+    const asteroidTexture = new three.TextureLoader().load('./planets/asteroid.jpg');
+    const noisePerlin = new three.TextureLoader().load('./perlin_noise.png')
+    const noiseSimplex = textureLoader.load('./simplex_noise.png');
+    const background = textureLoader.load('./stars.jpg');
 
     const genericVertex = await getFileContents("./shaders/vertexShader.glsl");
+
+    const planetFragment = await getFileContents("./shaders/planetFragment.glsl");
     const ringFragment = await getFileContents("./shaders/ringFragment.glsl");
+    const glowFragment =await getFileContents("./shaders/glowFragment.glsl");
 
     const sunEffectsVertex = await getFileContents("./shaders/sunEffectsVertex.glsl");
     const sunEffectsFragment = await getFileContents("./shaders/sunEffectsFragment.glsl");
+
+    const asteroidVertex = await getFileContents("./shaders/asteroidVertex.glsl");
+    const asteroidFragment = await getFileContents("./shaders/asteroidFragment.glsl");
 
     function addSunEffects()
     {
@@ -41,7 +46,7 @@
                 uniforms: 
                 {
                     spikeHeight: { value: 20.0 },
-                    spikeFreq: { value: 100.0 } ,
+                    spikeFreq: { value: 50.0 } ,
                     time: { value: 0.0 },
                     noise: {value: noiseSimplex}
                 },
@@ -56,66 +61,66 @@
 
     const planets = {
     sun: {
-        texture: textureLoader.load('planets/sun.jpg'),
+        texture: textureLoader.load('./planets/sun.jpg'),
         position: new three.Vector3(0, 0, 0),
         size: 40.0,
         speed: 0.0005,
         rotation: 0
     },
     mercury: {
-        texture: textureLoader.load('planets/mercury.jpg'),
+        texture: textureLoader.load('./planets/mercury.jpg'),
         position: new three.Vector3(0, 0, 100.0),
-        size: 8.0,
+        size: 10.0,
         speed: 0.002,
         rotation: 98 * Math.PI / 180
 
     },
     venus: {
-        texture: textureLoader.load('planets/venus.jpg'),
-        position: new three.Vector3(0, 0, 28.0),
-        size: 3.0,
-        speed: 0.03,
+        texture: textureLoader.load('./planets/venus.jpg'),
+        position: new three.Vector3(0, 0, 140.0),
+        size: 13.0,
+        speed: 0.003,
         rotation: 174 * Math.PI / 180
     },
     earth: {
-        texture: textureLoader.load('planets/earth.jpg'),
-        position: new three.Vector3(0, 0, 37.0),
-        size: 3.0,
-        speed: 0.025,
+        texture: textureLoader.load('./planets/earth.jpg'),
+        position: new three.Vector3(0, 0, 170.0),
+        size: 13.0,
+        speed: 0.0025,
         rotation: 24 * Math.PI / 180
     },
     mars: {
         texture: textureLoader.load('planets/mars.jpg'),
-        position: new three.Vector3(0, 0, 45.0),
-        size: 2.5,
-        speed: 0.02,
+        position: new three.Vector3(0, 0, 200.0),
+        size: 11.0,
+        speed: 0.002,
         rotation: 25 * Math.PI / 180
     },
     jupiter: {
         texture: textureLoader.load('planets/jupiter.jpg'),
-        position: new three.Vector3(0, 0, 75.0),
-        size: 8.0,
+        position: new three.Vector3(0, 0, 300.0),
+        size: 20.0,
         speed: 0.01,
         rotation: 3 * Math.PI / 180
     },
     saturn: {
         texture: textureLoader.load('planets/saturn.jpg'),
-        position: new three.Vector3(0, 0, 90.0),
-        size: 7.0,
+        position: new three.Vector3(0, 0, 370.0),
+        size: 18.0,
         speed: 0.005,
         rotation: 27 * Math.PI / 180
     },
     uranus: {
         texture: textureLoader.load('planets/uranus.jpg'),
-        position: new three.Vector3(0, 0, 110.0),
-        size: 6.0,
+        position: new three.Vector3(0, 0, 440.0),
+        size: 16.0,
         speed: 0.001,
         rotation: 98 * Math.PI / 180
     },
     neptune: {
         texture: textureLoader.load('planets/neptune.jpg'),
-        position: new three.Vector3(0, 0, 130.0),
-        size: 5.5,
+        position: new three.Vector3(0, 0, 500.0),
+        size: 15.0,
         speed: 0.002,
         rotation: 28 * Math.PI / 180
     }
@@ -123,23 +128,22 @@
     const planetObjects = {};
     for (let name in planets)
     {
-        let newPlanet = new Planet(name, planets[name]);
+        let newPlanet = new Planet(name, planets[name], genericVertex, planetFragment);
         planetObjects[name] = newPlanet;
     }
-
-    const planetAxes = {};
-    const planetOrbitLines = {}
 
 
     const sun = planetObjects["sun"];
     const sunEffect = addSunEffects();
     const planetPivots = {};
+    const asteroidBelt = new AsteroidField(asteroidVertex, asteroidFragment, asteroidTexture, noisePerlin, 250, 300, 5000);
+    const keplerBelt = new AsteroidField(asteroidVertex, asteroidFragment, asteroidTexture, noisePerlin, 550, 300, 5000);
     function init() {
         
         let can=document.getElementById('area');
         camera = new three.PerspectiveCamera( 25, (window.innerWidth / window.innerHeight), 0.1, 10000);
         camera.position.z = 100;
-        camera.position.set(0, 1000, 400);
+        camera.position.set(0, 2000, initialCameraZ);
         camera.lookAt(new three.Vector3(0, 0, 0));
     
 
@@ -150,21 +154,26 @@
         scene = new three.Scene();
 
         controls = new FlyControls(camera, renderer.domElement);
-        controls.movementSpeed = 120;
+        controls.movementSpeed = 800;
         controls.rollSpeed = Math.PI / 24;
         controls.autoForward = false;
         controls.dragToLook = true;
-
+        // scene.background = background;
         scene.add(sun.planet);
         scene.add(sunEffect);
+        scene.add(asteroidBelt.asteroidBelt);
+        scene.add(asteroidBelt.particleBelt);
+        scene.add(keplerBelt.asteroidBelt);
+        scene.add(keplerBelt.particleBelt);
         for (let name in planets)
         {
             if (name == "sun") continue; 
             sun.planet.add(planetObjects[name].pivot);
         }
-
         planetObjects["saturn"].addRings(
             0xC4A484, 0.3, 50.0, 1.0, 12.0, 15.0, genericVertex, ringFragment);
+
+        planetObjects["saturn"].addGlow(genericVertex, glowFragment, 0xD2B48C, 10.0, 5.0);
 
 
         const axisBox = document.getElementById('showAxis');
@@ -176,30 +185,40 @@
                 }
             });
 
-
-        const checkboxOrbit = document.getElementById('showOrbit');
-        checkboxOrbit.addEventListener('change', () => {
-            for (let name in planetAxes) {
-                planetOrbitLines[name].visible = checkboxOrbit.checked;
-                planetMeshes.sun.add(planetOrbitLines[name]);
-            }
+        const orbitBox = document.getElementById('showOrbit');
+        orbitBox.addEventListener('change', () =>
+            {
+                for (let name in planets)
+                {
+                    planetObjects[name].orbitPath.visible = orbitBox.checked;
+                }
             });
-        window.addEventListener('resize', () => {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
+        
+        const labelBox = document.getElementById('showLabels');
+        labelBox.addEventListener('change', () =>
+            {
+                for (let name in planets)
+                {
+                    planetObjects[name].label.visible = labelBox.checked;
+                }
+            });
 
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        window.addEventListener('wheel', (event) => {
-            camera.translateZ(event.deltaY * 0.05);
-        });
-        });
+        window.addEventListener('resize', () => 
+            {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+
+                renderer.setSize(window.innerWidth, window.innerHeight);
+
+            });
 
         composer = new EffectComposer(renderer);
         const renderPass = new RenderPass(scene, camera);
         composer.addPass(renderPass);
-        const bloomPass = new UnrealBloomPass({ x: window.innerWidth, y: window.innerHeight }, 0.7, 2.0, 0.00);
+        const bloomPass = new UnrealBloomPass({ x: window.innerWidth, y: window.innerHeight }, 2.2, 1.5, 0.5);
         composer.addPass(bloomPass);
-    }
+}
+
 
     function animate() {
         const delta = clock.getDelta();
@@ -207,13 +226,24 @@
         renderer.render( scene, camera );
         composer.render();
         planetObjects.sun.mesh.rotation.y += 0.01;
+        const currentCameraZ = camera.position.z
+        const zoomFactor = currentCameraZ / initialCameraZ;
         for (let name in planets)
         {
             planetObjects[name].pivot.rotation.y += planets[name].speed * 2.0;
             planetObjects[name].mesh.rotation.y += planets[name].speed * 6.0;
+            if (planetObjects[name].label.visible)
+            {
+                const newScale = zoomFactor * baseSize;
+                planetObjects[name].label.scale.set(newScale, newScale, newScale);
+            }
         }
         sunEffect.rotation.y += 0.01;
         sunEffect.material.uniforms.time.value = clock.getElapsedTime();
+        asteroidBelt.particleBelt.rotation.y+= 0.3;
+        asteroidBelt.asteroidBeltMaterial.uniforms.time.value = clock.getElapsedTime();
+        keplerBelt.particleBelt.rotation.y+= 0.3;
+        keplerBelt.asteroidBeltMaterial.uniforms.time.value = clock.getElapsedTime();
     };
 
     window.onload=init();

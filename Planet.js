@@ -1,8 +1,7 @@
-
 import * as three from './files/three.module.js';
 export class Planet
 {
-    constructor(name, entry) 
+    constructor(name, entry, vShader, fShader) 
     {
         this.name = name;
         this.planet = new three.Object3D();
@@ -11,7 +10,19 @@ export class Planet
         this.tilt.rotation.z = entry.rotation;
 
         const geometry = new three.SphereGeometry(entry.size, 32, 32);
-        const material = new three.MeshBasicMaterial({ map: entry.texture });
+        this.geometry = geometry;
+        // const material = new three.MeshBasicMaterial({ map: entry.texture });
+        // const material = new three.MeshStandardMaterial({ map: entry.texture });
+        const material = new three.ShaderMaterial(
+            {
+                vertexShader: vShader, 
+                fragmentShader: fShader,
+                uniforms: 
+                {
+                    tex: {value : entry.texture}
+                }
+            })
+        
         const mesh = new three.Mesh(geometry, material);
         mesh.rotation.z = entry.rotation;
         this.mesh = mesh;
@@ -58,7 +69,7 @@ export class Planet
 
     addOrbitPath(radius)
     {
-        const geometry = new three.TorusGeometry(radius, 0.1, 60, 100);
+        const geometry = new three.TorusGeometry(radius, 0.5, 120, 100);
         const material = new three.MeshBasicMaterial(
                 {   
                     color: 0xffffff, 
@@ -133,6 +144,29 @@ export class Planet
         const geometry = new three.RingGeometry(innerRing, outerRing)
         const mesh = new three.Mesh(geometry, material);
         mesh.rotation.x = Math.PI / 2;
+        this.tilt.add(mesh);
+    }
+
+    addGlow(vShader, fShader, color, opacity, size)
+    {
+        const material = new three.ShaderMaterial(
+            {
+            vertexShader: vShader,
+            fragmentShader: fShader,
+            uniforms: {
+                color: { value: new three.Color(color)},
+                opacity: { value: opacity},
+                radius: {value: this.mesh.geometry.parameters.radius + size}
+            },
+            transparent: true,
+            depthWrite: false,
+            side: three.DoubleSide,
+            blending: three.AdditiveBlending
+        });
+
+        // const geometry = new three.TorusGeometry((this.mesh.geometry.parameters.radius + 0.2), 0.2, 50);
+        const geometry = this.mesh.geometry;
+        const mesh = new three.Mesh(geometry, material);
         this.tilt.add(mesh);
     }
 }

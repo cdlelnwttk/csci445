@@ -9,5 +9,6 @@ void main() {
     if(dist > radius) discard;
 
     vec4 color = texture2D(map, uv);
-    gl_FragColor = color;
+    gl_FragColor = vec4(color.rgb * 0.3, color.a);
 }
+
