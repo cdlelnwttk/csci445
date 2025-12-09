@@ -11,6 +11,7 @@
     import { EffectComposer } from 'three/addons/EffectComposer.js';
     import { RenderPass } from 'three/addons/RenderPass.js';
     import { UnrealBloomPass } from 'three/addons/UnrealBloomPass.js';
+    import { Planet } from './Planet.js';
 
     let camera, scene, renderer, controls, composer;
     const clock = new three.Clock();
@@ -26,6 +27,7 @@
     const noiseSimplex = new three.TextureLoader().load('simplex_noise.png')
     const spikeV=await getFileContents("./spikeVertex.glsl");
     const spikeF=await getFileContents("./spikefrag.glsl");
+    const glowV =await getFileContents("./glowShader.glsl");
     const fontJsonStr = await getFileContents("./font.typeface.json");
     const font = new FontLoader().parse(JSON.parse(fontJsonStr));
     noiseSimplex.wrapS = three.RepeatWrapping;
@@ -72,32 +74,66 @@
     //FIX Y POSITION
     function addLabel(name)
     {
-        const object = new three.Object3D();
-        const geometry = new TextGeometry(name,
-            {
-	            font: font,
-	            size: 8,
-	            depth: 2,
-	            curveSegments: 12,
-                transparent: true,
-            });
-        const material = new three.MeshBasicMaterial({ color: 0xffffff });
-        const mesh = new three.Mesh(geometry, material);
+        // const object = new three.Object3D();
+        // const geometry = new TextGeometry(name,
+        //     {
+	    //         font: font,
+	    //         size: 8,
+	    //         depth: 2,
+	    //         curveSegments: 12,
+        //         transparent: true,
+        //     });
+        // const material = new three.MeshBasicMaterial({ color: 0xffffff });
+        // const mesh = new three.Mesh(geometry, material);
 
-        const outlineMaterial = new three.MeshBasicMaterial({ color: 0x800080, transparent: true, opacity: 0.4});
-        const outlineMesh = new three.Mesh(geometry.clone(), outlineMaterial);
-        outlineMesh.scale.multiplyScalar(1.01);
+        // const outlineMaterial = new three.MeshBasicMaterial({ color: 0x800080, transparent: true, opacity: 0.4});
+        // const outlineMesh = new three.Mesh(geometry.clone(), outlineMaterial);
+        // outlineMesh.scale.multiplyScalar(1.01);
 
 
-        mesh.rotation.x = -Math.PI / 2; 
-        outlineMesh.rotation.x = -Math.PI / 2; 
+        // mesh.rotation.x = -Math.PI / 2; 
+        // outlineMesh.rotation.x = -Math.PI / 2; 
 
-        object.add(mesh);
-        object.add(outlineMesh);
-        return object;
+        // object.add(mesh);
+        // object.add(outlineMesh);
+        // return object;
+           const canvas = document.createElement('canvas');
+    const size = 3000;
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
+
+    ctx.clearRect(0, 0, size, size);
+
+    ctx.font = '800px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    ctx.lineWidth = 100;          
+    ctx.strokeStyle = 'black';
+    ctx.strokeText(name, size / 2, size / 2);
+
+    ctx.fillStyle = 'white';
+    ctx.fillText(name, size / 2, size / 2);
+
+    const texture = new three.CanvasTexture(canvas);
+    texture.needsUpdate = true;
+    texture.minFilter = three.LinearFilter;
+    texture.magFilter = three.LinearFilter;
+
+    const material = new three.SpriteMaterial({
+        map: texture,
+        transparent: true,
+        alphaTest: 0.1, 
+        depthTest: true,
+        depthWrite: false
+    });
+
+    const sprite = new three.Sprite(material);
+    sprite.scale.set(30, 30, 1);
+    sprite.position.y += 20;
+    return sprite;
     }
-
-
 
     
 
@@ -261,18 +297,12 @@
         rotation: 28 * Math.PI / 180
     }
 };  
-   const planetMeshes = {}; 
-
-    for (let name in planets) {
-
-        const geometry = new three.SphereGeometry(planets[name].size, 32, 32);
-        const material = new three.MeshBasicMaterial({ map: planets[name].texture },);
-        const mesh = new three.Mesh(geometry, material);
-        mesh.position.copy(planets[name].position);
-        planetMeshes[name] = mesh;
+    const planetObjects = {};
+    for (let name in planets)
+    {
+        let newPlanet = new Planet(name, planets[name]);
+        planetObjects[name] = newPlanet;
     }
-
-    const planetOrbits = {}
 
     const planetAxes = {};
     const planetOrbitLines = {}
@@ -321,13 +351,31 @@ const uranusRMesh = new three.Mesh(jupRGeometry, jupRMaterial);
 jupRingMesh.rotation.x = Math.PI / 2;
 
 
-
     const planetLabels = {};
     const asteroid_belt = addAsteroidField(60, 500);
     const kepler_belt = addAsteroidField(150, 1000);
     asteroid_fields.push(asteroid_belt);
     const dust = addDustParticles(60);
     const kepler_dust = addDustParticles(150);
+
+      const glowMat = new three.ShaderMaterial({
+            vertexShader: vertexShaderSource,
+            fragmentShader: glowV,
+            uniforms: {
+                glowColor: { value: new three.Color(0xFFC000) },
+                intensity: { value: 1.0 },
+                radius: { value: 0.6},
+                blur: { value: 0.8 },
+      },
+        transparent: true,
+         depthWrite: false,
+         side: three.DoubleSide,
+         additiveBlending: true,
+    });
+
+    const sun = planetObjects["sun"];
+    const planetPivots = {};
+    // sun.axis.visible = false;
     function init() {
         
         let can=document.getElementById('area');
@@ -357,46 +405,15 @@ jupRingMesh.rotation.x = Math.PI / 2;
         controls.autoForward = false;
         controls.dragToLook = true;
 
-        scene.add(planetMeshes.sun);
-        scene.add(spike);
-        let sunLabel = addLabel("Sun");
-        // sunLabel.position.set(0, planets.sun.size + 20, 0);
-        planetLabels["Sun"] = sunLabel;
-        planetMeshes.sun.add(sunLabel);
+        scene.add(sun.object);
+        for (let name in planets)
+        {
+            if (name == "sun") continue;
+            const pivot = new three.Object3D();
+            pivot.add(planetObjects[name].object);
+            sun.object.add(pivot);
 
-        for (let name in planets) {
-            if (name === "sun") continue;
-
-            let orbit = new three.Object3D();
-            planetMeshes.sun.add(orbit);
-            orbit.add(planetMeshes[name]);
-            planetOrbits[name] = orbit;
-
-            let axis = addAxis(planets[name].size * 3);
-            planetMeshes[name].add(axis);
-            planetAxes[name] = axis; 
-
-            planetMeshes[name].rotation.z = planets[name].rotation;
-
-            const radius = planets[name].position.z;
-            const orbitMesh = addOrbitPath(radius);
-            planetOrbitLines[name] = orbitMesh;
-            planetMeshes.sun.add(orbitMesh);
-
-            let label = addLabel(name);
-            label.rotation.z = -planetMeshes[name].rotation.z;
-            planetLabels[name] = label;
-            planetMeshes[name].add(label);
         }
-
-        planetMeshes.saturn.add(saturnRingMesh);
-        planetMeshes.jupiter.add(jupRingMesh);
-        planetMeshes.uranus.add(uranusRMesh);
-
-        scene.add(dust);
-        scene.add(kepler_dust);
-        scene.add(asteroid_belt.points);
-        scene.add(kepler_belt.points);  
 
         const checkbox = document.getElementById('showAxis');
         checkbox.addEventListener('change', () => {
@@ -434,18 +451,15 @@ jupRingMesh.rotation.x = Math.PI / 2;
         const delta = clock.getDelta();
         controls.update(delta);
         renderer.render( scene, camera );
-        composer.render();
         // composer.render();
-        planetMeshes.sun.rotation.y += 0.01; 
-        for (let name in planetOrbits) {
-            // planetOrbits[name].rotation.y += planets[name].speed;
-            // planetMeshes[name].rotation.y += 0.5;
-        }
-        asteroid_belt.mat.uniforms.time.value = clock.getElapsedTime();
-        kepler_belt.mat.uniforms.time.value = clock.getElapsedTime();
-        dust.rotation.y += 0.01;
-        spike.rotation.y += 0.01;
-        spike.material.uniforms.time.value = clock.getElapsedTime();
+        // composer.render();
+        // planetMeshes.sun.rotation.y += 0.01; 
+        // for (let name in planetPivots)
+        // {
+        //     planetPivots[name].rotation.y += planets[name].speed;
+        //     planetMeshes[name].rotation.y += 0.5;
+        // }
+        // asteroid_belt.mat.uniforms.time.value = clock.getElapsedTime();
         // spike.materialSpike.time += 0.001;
     };
 
