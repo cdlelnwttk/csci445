@@ -28,7 +28,12 @@
 
     const planetFragment = await getFileContents("./shaders/planetFragment.glsl");
     const ringFragment = await getFileContents("./shaders/ringFragment.glsl");
-    const glowFragment =await getFileContents("./shaders/glowFragment.glsl");
+    const glowFragment = await getFileContents("./shaders/glowFragment.glsl");
+
+
+    const backgroundVertex = await getFileContents("./shaders/backgroundVertex.glsl");
+    const backgroundFragment = await getFileContents("./shaders/backgroundFragment.glsl");
+
 
     const sunEffectsVertex = await getFileContents("./shaders/sunEffectsVertex.glsl");
     const sunEffectsFragment = await getFileContents("./shaders/sunEffectsFragment.glsl");
@@ -59,6 +64,46 @@
         return new three.Mesh(geometry, material);
     }
 
+    function addBack()
+    {
+        const numberOfParticles = 8000;
+        const radius = 200;
+        const positions = new Float32Array(numberOfParticles * 3);
+        
+        const volumeSize = 4000;
+
+        for (let i = 0; i < numberOfParticles; i++) {
+            const x = (Math.random() - 0.5) * volumeSize;
+            const y = (Math.random() - 0.5) * volumeSize;
+    
+            const z = (Math.random() - 0.5) * volumeSize;
+            positions[i * 3 + 0] = x;
+            positions[i * 3 + 1] = y;
+            positions[i * 3 + 2] = z;
+        } 
+            const geometry = new three.BufferGeometry();
+            geometry.setAttribute("position", new three.BufferAttribute(positions, 3));
+
+        const material = new three.ShaderMaterial(
+            {
+                vertexShader: backgroundVertex,
+                fragmentShader: backgroundFragment,
+                uniforms: 
+                {
+                    time: { value: 0.0 },
+                    noise: {value: noiseSimplex},
+                    color: {value: new three.Color( 0xFFFFFF)},
+                    size: {value: 5.0}
+                },
+                side: three.DoubleSide,
+                blending: three.AdditiveBlending,
+                transparent: true,
+                depthWrite: false,
+                blending: three.AdditiveBlending
+            });
+
+            return new three.Points(geometry, material);
+    }
     const planets = {
     sun: {
         texture: textureLoader.load('./planets/sun.jpg'),
@@ -138,6 +183,7 @@
     const planetPivots = {};
     const asteroidBelt = new AsteroidField(asteroidVertex, asteroidFragment, asteroidTexture, noisePerlin, 250, 300, 5000);
     const keplerBelt = new AsteroidField(asteroidVertex, asteroidFragment, asteroidTexture, noisePerlin, 550, 300, 5000);
+    const test = addBack();
     function init() {
         
         let can=document.getElementById('area');
@@ -175,7 +221,7 @@
 
         planetObjects["saturn"].addGlow(genericVertex, glowFragment, 0xD2B48C, 10.0, 5.0);
 
-
+        scene.add(test);
         const axisBox = document.getElementById('showAxis');
         axisBox.addEventListener('change', () => 
             {
@@ -243,7 +289,9 @@
         asteroidBelt.particleBelt.rotation.y+= 0.3;
         asteroidBelt.asteroidBeltMaterial.uniforms.time.value = clock.getElapsedTime();
         keplerBelt.particleBelt.rotation.y+= 0.3;
+        test.material.uniforms.time.value = clock.getElapsedTime();
         keplerBelt.asteroidBeltMaterial.uniforms.time.value = clock.getElapsedTime();
+
     };
 
     window.onload=init();
