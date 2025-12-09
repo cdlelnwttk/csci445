@@ -91,7 +91,7 @@
                 {
                     time: { value: 0.0 },
                     noise: {value: noiseSimplex},
-                    size: {value: 200}
+                    size: {value: 5.0}
                 },
                 side: three.DoubleSide,
                 blending: three.AdditiveBlending,
