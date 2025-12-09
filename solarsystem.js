@@ -23,19 +23,50 @@
     }
     const textureLoader = new three.TextureLoader();
 
+    const noiseSimplex = textureLoader.load('simplex_noise.png');
+
+    const genericVertex = await getFileContents("./shaders/vertexShader.glsl");
+    const ringFragment = await getFileContents("./shaders/ringFragment.glsl");
+
+    const sunEffectsVertex = await getFileContents("./shaders/sunEffectsVertex.glsl");
+    const sunEffectsFragment = await getFileContents("./shaders/sunEffectsFragment.glsl");
+
+    function addSunEffects()
+    {
+        
+        const geometry = new three.SphereGeometry(40, 128, 128);
+    
+        const material = new three.ShaderMaterial(
+            {
+                uniforms: 
+                {
+                    spikeHeight: { value: 20.0 },
+                    spikeFreq: { value: 100.0 } ,
+                    time: { value: 0.0 },
+                    noise: {value: noiseSimplex}
+                },
+                vertexShader: sunEffectsVertex,
+                fragmentShader: sunEffectsFragment,
+                side: three.DoubleSide,
+                blending: three.AdditiveBlending
+            });
+    
+        return new three.Mesh(geometry, material);
+    }
 
     const planets = {
     sun: {
         texture: textureLoader.load('planets/sun.jpg'),
         position: new three.Vector3(0, 0, 0),
-        size: 10.0,
-        speed: 0.01
+        size: 40.0,
+        speed: 0.0005,
+        rotation: 0
     },
     mercury: {
         texture: textureLoader.load('planets/mercury.jpg'),
-        position: new three.Vector3(0, 0, 17.0),
-        size: 2.0,
-        speed: 0.05,
+        position: new three.Vector3(0, 0, 100.0),
+        size: 8.0,
+        speed: 0.002,
         rotation: 98 * Math.PI / 180
 
     },
@@ -85,7 +116,7 @@
         texture: textureLoader.load('planets/neptune.jpg'),
         position: new three.Vector3(0, 0, 130.0),
         size: 5.5,
-        speed: 0.000005,
+        speed: 0.002,
         rotation: 28 * Math.PI / 180
     }
 };  
@@ -101,13 +132,14 @@
 
 
     const sun = planetObjects["sun"];
+    const sunEffect = addSunEffects();
     const planetPivots = {};
     function init() {
         
         let can=document.getElementById('area');
         camera = new three.PerspectiveCamera( 25, (window.innerWidth / window.innerHeight), 0.1, 10000);
         camera.position.z = 100;
-        camera.position.set(0, 500, 400);
+        camera.position.set(0, 1000, 400);
         camera.lookAt(new three.Vector3(0, 0, 0));
     
 
@@ -124,24 +156,64 @@
         controls.dragToLook = true;
 
         scene.add(sun.planet);
+        scene.add(sunEffect);
         for (let name in planets)
         {
             if (name == "sun") continue; 
             sun.planet.add(planetObjects[name].pivot);
         }
 
+        planetObjects["saturn"].addRings(
+            0xC4A484, 0.3, 50.0, 1.0, 12.0, 15.0, genericVertex, ringFragment);
+
+
+        const axisBox = document.getElementById('showAxis');
+        axisBox.addEventListener('change', () => 
+            {
+                for (let name in planets)
+                {
+                    planetObjects[name].axis.visible = axisBox.checked;
+                }
+            });
+
+
+        const checkboxOrbit = document.getElementById('showOrbit');
+        checkboxOrbit.addEventListener('change', () => {
+            for (let name in planetAxes) {
+                planetOrbitLines[name].visible = checkboxOrbit.checked;
+                planetMeshes.sun.add(planetOrbitLines[name]);
+            }
+            });
+        window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        window.addEventListener('wheel', (event) => {
+            camera.translateZ(event.deltaY * 0.05);
+        });
+        });
+
+        composer = new EffectComposer(renderer);
+        const renderPass = new RenderPass(scene, camera);
+        composer.addPass(renderPass);
+        const bloomPass = new UnrealBloomPass({ x: window.innerWidth, y: window.innerHeight }, 0.7, 2.0, 0.00);
+        composer.addPass(bloomPass);
     }
 
     function animate() {
         const delta = clock.getDelta();
         controls.update(delta);
         renderer.render( scene, camera );
-        planetObjects.sun.mesh.rotation.y += 0.01; 
+        composer.render();
+        planetObjects.sun.mesh.rotation.y += 0.01;
         for (let name in planets)
         {
-            planetObjects[name].pivot.rotation.y += planets[name].speed;
-            planetObjects[name].planet.rotation.y += planets[name].speed;
+            planetObjects[name].pivot.rotation.y += planets[name].speed * 2.0;
+            planetObjects[name].mesh.rotation.y += planets[name].speed * 6.0;
         }
+        sunEffect.rotation.y += 0.01;
+        sunEffect.material.uniforms.time.value = clock.getElapsedTime();
     };
 
     window.onload=init();

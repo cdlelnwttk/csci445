@@ -12,10 +12,5 @@ void main() {
 
     vec3 color = mix(yellow, orange, uv.y);
     color = mix(color, red, uv.y);
-
-    float dist = length(our_uv);
-
-    float radius = 1.0;
-    if (dist < radius) discard;
-    gl_FragColor = vec4(color * 10.0, 1.0);
+    gl_FragColor = vec4(color, 1.0);
 }

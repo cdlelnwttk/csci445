@@ -7,16 +7,23 @@ export class Planet
         this.name = name;
         this.planet = new three.Object3D();
         this.pivot = new three.Object3D();
+        this.tilt = new three.Object3D();
+        this.tilt.rotation.z = entry.rotation;
 
         const geometry = new three.SphereGeometry(entry.size, 32, 32);
         const material = new three.MeshBasicMaterial({ map: entry.texture });
         const mesh = new three.Mesh(geometry, material);
+        mesh.rotation.z = entry.rotation;
         this.mesh = mesh;
-        this.planet.add(this.mesh);
+    
 
         this.axis = this.addAxis(entry.size * 3);
-        this.planet.add(this.axis);
+        this.axis.rotation.z = entry.rotation;
 
+
+        this.tilt.add(this.axis);
+        this.tilt.add(this.mesh);
+        this.planet.add(this.tilt);
         this.orbitPath = this.addOrbitPath(entry.position.z);
 
         this.label = this.addLabel(name, entry.size * 2);
@@ -26,6 +33,7 @@ export class Planet
         this.pivot.position.copy = (0, 0, 0);
         this.pivot.add(this.planet);
         this.pivot.add(this.orbitPath);
+
     }
 
     addAxis(length)
@@ -36,7 +44,13 @@ export class Planet
         ];
     
         const geometry = new three.BufferGeometry().setFromPoints(points);
-        const material = new three.LineBasicMaterial({color: 0x00ff00});
+        const material = new three.LineBasicMaterial(
+            {
+                color: 0x00ff00,
+                transparent: true,
+                opacity: 1.0
+
+            });
         const axisLine = new three.Line(geometry, material);
     
         return axisLine;
@@ -98,5 +112,27 @@ export class Planet
         sprite.position.y += yPos;
         return sprite;
     }
-    addRings() {}
+
+    addRings(color, offset, frequency, opacity, innerRing, outerRing, vShader, fShader) 
+    {
+        const material = new three.ShaderMaterial(
+            {
+                vertexShader: vShader,
+                fragmentShader: fShader,
+                uniforms: 
+                {
+                    ringColor: { value: new three.Color(color) },
+                    offset: {value : offset},
+                    frequency: {value: frequency},
+                    opacity: { value: opacity }
+                },
+                transparent: true,
+                side: three.DoubleSide
+            });
+
+        const geometry = new three.RingGeometry(innerRing, outerRing)
+        const mesh = new three.Mesh(geometry, material);
+        mesh.rotation.x = Math.PI / 2;
+        this.tilt.add(mesh);
+    }
 }
