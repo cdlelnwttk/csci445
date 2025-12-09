@@ -22,12 +22,10 @@ export class Planet
             })
         
         const mesh = new three.Mesh(geometry, material);
-        mesh.rotation.z = entry.rotation;
         this.mesh = mesh;
     
 
         this.axis = this.addAxis(entry.size * 3);
-        this.axis.rotation.z = entry.rotation;
 
 
         this.tilt.add(this.axis);

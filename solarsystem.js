@@ -50,7 +50,7 @@
                 uniforms: 
                 {
                     spikeHeight: { value: 40.0 },
-                    spikeFreq: { value: 50.0 } ,
+                    spikeFreq: { value: 1.0 } ,
                     time: { value: 0.0 },
                     noise: {value: noiseSimplex}
                 },
@@ -96,7 +96,6 @@
                 blending: three.AdditiveBlending,
                 transparent: true,
                 depthWrite: false,
-                blending: three.AdditiveBlending
             });
 
             return new three.Points(geometry, material);
@@ -186,7 +185,6 @@
 
     const sun = planetObjects["sun"];
     const sunEffect = addSunEffects();
-    const planetPivots = {};
     const asteroidBelt = new AsteroidField(asteroidVertex, asteroidFragment, asteroidTexture, noisePerlin, 250, 300, 5000);
     const keplerBelt = new AsteroidField(asteroidVertex, asteroidFragment, asteroidTexture, noisePerlin, 550, 300, 5000);
     const test = addBack();
