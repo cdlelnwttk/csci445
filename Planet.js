@@ -5,24 +5,27 @@ export class Planet
     constructor(name, entry) 
     {
         this.name = name;
-
-        this.object = new three.Object3D();
+        this.planet = new three.Object3D();
+        this.pivot = new three.Object3D();
 
         const geometry = new three.SphereGeometry(entry.size, 32, 32);
         const material = new three.MeshBasicMaterial({ map: entry.texture });
         const mesh = new three.Mesh(geometry, material);
-        mesh.position.copy(entry.position);
         this.mesh = mesh;
-        this.object.add(this.mesh);
+        this.planet.add(this.mesh);
 
         this.axis = this.addAxis(entry.size * 3);
-        this.object.add(this.axis);
+        this.planet.add(this.axis);
 
         this.orbitPath = this.addOrbitPath(entry.position.z);
-        this.object.add(this.orbitPath);
 
-        this.label = this.addLabel(name, entry.position.y);
-        this.object.add(this.label);
+        this.label = this.addLabel(name, entry.size * 2);
+        this.planet.add(this.label);
+        this.planet.position.copy(entry.position);
+
+        this.pivot.position.copy = (0, 0, 0);
+        this.pivot.add(this.planet);
+        this.pivot.add(this.orbitPath);
     }
 
     addAxis(length)
