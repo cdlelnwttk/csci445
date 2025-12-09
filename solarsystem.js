@@ -70,15 +70,16 @@
         
         const cube = 4000;
 
-        for (let i = 0; i < numberOfParticles; i++) {
-            const x = (Math.random() - 0.5) * cube;
-            const y = (Math.random() - 0.5) * cube;
-    
-            const z = (Math.random() - 0.5) * cube;
-            positions[i * 3 + 0] = x;
-            positions[i * 3 + 1] = y;
-            positions[i * 3 + 2] = z;
-        } 
+        for (let i = 0; i < numberOfParticles; i++)
+            {
+                const x = (Math.random() - 0.5) * cube;
+                const y = (Math.random() - 0.5) * cube;
+                const z = (Math.random() - 0.5) * cube;
+                
+                positions[i * 3 + 0] = x;
+                positions[i * 3 + 1] = y;
+                positions[i * 3 + 2] = z;
+            } 
             const geometry = new three.BufferGeometry();
             geometry.setAttribute("position", new three.BufferAttribute(positions, 3));
 
@@ -90,7 +91,7 @@
                 {
                     time: { value: 0.0 },
                     noise: {value: noiseSimplex},
-                    size: {value: 5.0}
+                    size: {value: 200}
                 },
                 side: three.DoubleSide,
                 blending: three.AdditiveBlending,
@@ -100,6 +101,7 @@
 
             return new three.Points(geometry, material);
     }
+
     const planets = {
     sun: {
         texture: textureLoader.load('./planets/sun.jpg'),
