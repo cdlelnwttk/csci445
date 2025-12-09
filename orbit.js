@@ -1,4 +1,7 @@
 
+    /*
+        Scratch work - not used
+    */
     import * as three from 'three';
     import { OrbitControls } from 'three/addons/OrbitControls.js';
 
